@@ -29,6 +29,12 @@ class queryAccount(Base):
     def __repr__(self):
         return "<User(name='%s', fullname='%s')>" % (self.id, self.name)
 
+class friendLink(Base):
+    id = Column(Integer,primary_key=True)
+    title = Column(String(25))
+    website = Column(String(50))
+    addTime = Column(DateTime(timezone=True),default=datetime.datetime.utcnow())
+
 # 初始化数据库连接:
 engine = create_engine('mysql+mysqlconnector://root:password@localhost:3306/test')
 # 创建DBSession类型:
