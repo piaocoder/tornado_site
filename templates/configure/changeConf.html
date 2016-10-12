@@ -1,10 +1,131 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block content %}
+    <div class="row">
+        <div class="columns medium-10 medium-offset-1" style="padding-top: 3rem;padding-bottom: 3rem">
+            <h3 class="text-center">欢迎使用！ <small>由您配置</small></h3>
+            <p class="text-center">我们无法找到您的配置文件或者您的配置文件出错了。</p>
+            <hr>
+            <h4 class="subheaders">您可以这样做：</h4>
+            <div class="row">
+                <div class="columns medium-12">
+                    <!-- title -->
+                    <ul class="tabs" data-tabs id="example-tabs">
+                        <li class="tabs-title is-active"><a href="#panel1" aria-selected="true">手动更改ini文件</a></li>
+                        <li class="tabs-title"><a href="#panel2">手工配置</a></li>
+                    </ul>
+
+                    <!-- content -->
+                    <div class="tabs-content" data-tabs-content="example-tabs">
+                        <div class="tabs-panel is-active table-scroll" id="panel1">
+                            <p>你可以直接增加或者修改位于<code>configure</code>文件夹下的ini文件.</p>
+                            <p>我们使用的是<code>ini</code>配置文件</p>
+                            <p>请使用database作为section名字来指示数据库的连接，在这个section下，您需要配置：</p>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>名称</th>
+                                        <th>填充内容</th>
+                                        <th>备注</th>
+                                    </tr>
+                                </thead>
+                                <!-- body -->
+                                <tbody>
+                                    <tr>
+                                        <td>type</td>
+                                        <td>数据库类型</td>
+                                        <td>暂时只支持MySQL和SQLite</td>
+                                    </tr>
+                                    <tr>
+                                        <td>user</td>
+                                        <td>数据库用户</td>
+                                        <td>请尽可能选用具有最小的privileges的用户来访问这个数据库</td>
+                                    </tr>
+                                    <tr>
+                                        <td>password</td>
+                                        <td>数据库密码</td>
+                                        <td>SQLite请留空</td>
+                                    </tr>
+                                    <tr>
+                                        <td>host</td>
+                                        <td>数据库地址</td>
+                                        <td>本地可选择localhost</td>
+                                    </tr>
+                                    <tr>
+                                        <td>name</td>
+                                        <td>数据库名称</td>
+                                        <td>SQLite不用给上后缀名<code>.db</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+                        <div class="tabs-panel" id="panel2">
+                            <p>位于下方的就是您需要提供的数据了，您现在就绪了吗？</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row ">
+        <div class="columns medium-10 medium-offset-1 configure-form">
+            <h3 class="site-title text-center">NPUACM</h3>
+            <h5 class="row text-center">我们需要下面的信息</h5>
+            <form class="form-control" action="/configure/" method="POST">
+                {% module xsrf_form_html() %}
+                <h6 class="text-center">数据库</h6>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库类型
+                            <select name="databaseType">
+                                <option name="databaseType" value="MySQL">MySQL</option>
+                                <option name="databaseType" value="SQLite">SQLite</option>
+                            </select>
+                        </label>
+                        <p class="help-text">目前暂时只支持MySQL和SQLite。</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库地址
+                            <input type="text" name="databaseHost" placeholder="数据库位于本地，可以键入localhost">
+                        </label>
+                        <p class="help-text">数据库位于本地，可以键入localhost。</p>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库用户名
+                            <input type="text" name="databaseUser" placeholder="建议您键入与权限相符的用户名。">
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库用户名
+                            <input type="password" name="databasePassword" placeholder="密码">
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库名称
+                            <input type="text" name="databaseName" placeholder="数据库名称">
+                        </label>
+                        <p>如果您选择的是SQLite数据库，您在输入数据库名称的时候，不需要带上<code>.db</code>后缀。</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns medium-6 medium-offset-3">
+                        <button type="submit" class="submit-button button">提交</button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+
+
+    </div>
+{% end %}

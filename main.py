@@ -8,6 +8,8 @@ from configure import configure
 from tornado.options import define, options
 define("port", default=8000, help="run on the given port", type=int)
 
+# enable jinja2
+
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         greeting = self.get_argument('greeting', 'Hello')
@@ -22,10 +24,32 @@ class configureHandler(tornado.web.RequestHandler):
         if conf.configExist and conf.databaseConnect :
             raise tornado.web.HTTPError('403')
         else:
-            self.render('/configure/base.html')
+            self.render('configure/changeConf.html')
+
+    def post(self, *args, **kwargs):
+        conf = configure.config()
+        conf.runTest()
+        if conf.configExist and conf.databaseConnect :
+            raise tornado.web.HTTPError('403')
+        else:
+            pass
+        databaseType = self.get_argument('databaseType')
+        databaseUser = self.get_argument('databaseUser')
+        databasePassword = self.get_argument('databasePassword')
+        databaseHost = self.get_argument('databaseHost')
+        databaseName = self.get_argument('databaseName')
+        conf = configure.config()
+        ver = conf.testDatabaseConnect(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
+        print ver
+        if ver:
+            conf.saveConfFiles(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
+            # finished...
+            self.render('configure/result.html',locals())
+        else:
+            self.render('configure/changeConf.html')
 
     def write_error(self, status_code, **kwargs):
-        self.render('/configure/error.html',status_code=status_code)
+        self.render('configure/error.html',status_code=status_code)
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
@@ -34,10 +58,15 @@ if __name__ == "__main__":
     conf = configure.config()
     conf.runTest()
 
+    # setting
+    settings = {
+        "xsrf_cookies": True,
+        "login_url": "/login",
+    }
     app = tornado.web.Application(
         handlers=[
             (r"/", IndexHandler),
-            (r"/configure/",configureHandler)
+            (r"^/configure/",configureHandler)
 
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),

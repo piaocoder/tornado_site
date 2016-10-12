@@ -7,7 +7,7 @@ This is the configuration file that show some vital information such as
 * the discription of the whole site
 '''
 import logging
-
+import os
 
 class config:
     '''
@@ -26,7 +26,6 @@ class config:
         '''
         try:
             import ConfigParser
-            import os
             import sqlalchemy
             import MySQLdb
             import sqlite3
@@ -58,9 +57,6 @@ class config:
         else:
             infoString = 'Configuration file does not exist or set incorrect ,you will specify the options manually.'
             logging.warning(infoString)
-
-
-
 
     def checkDatabase(self):
         # default : MySQL
@@ -107,6 +103,63 @@ class config:
         self.checkRequirement()
         self.checkConfFile()
         self.checkDatabase()
+
+    #set up a new ini file
+    def saveConfFiles(self,type,user,password,host,name):
+        import ConfigParser
+        configFilePath = os.path.join(os.path.dirname(__file__), "config.ini")
+        cf = ConfigParser.ConfigParser()
+        # add database section
+        cf.add_section('database')
+        cf.set('database','type',type)
+        cf.set('database','user',user)
+        cf.set('database','password',password)
+        cf.set('database','host',host)
+        cf.set('database','name',name)
+        cf.write(open(configFilePath, "w"))
+        return True
+
+    def testDatabaseConnect(self,type,user,password,host,name):
+        # default : MySQL
+        if 1:
+            import ConfigParser
+            import sqlalchemy
+            configParser = ConfigParser.ConfigParser()
+            try:
+                databaseType = type
+                databaseUser = user
+                databasePassword = password
+                databaseHost = host
+                databaseName = name
+                if databaseType == 'MySQL':
+                    import MySQLdb
+                    con = MySQLdb.connect(databaseHost,databaseUser,databasePassword,databaseName)
+                    cur = con.cursor()
+                    cur.execute("SELECT VERSION()")
+                    verData = cur.fetchone()
+                    print verData
+                    #logging.info("Database version : %s ") % verData[0]
+                    con.close()
+                    return verData[0]
+                elif databaseType == 'SQLite':
+                    import sqlite3
+                    import os
+                    sqliteParentDir =os.path.abspath(os.path.join(os.path.dirname('main.py'),os.path.pardir))
+                    sqliteFilePath = os.path.join(sqliteParentDir,'%s.db') %(databaseName)
+                    conn = sqlite3.connect(sqliteFilePath)
+                    conn.close()
+                    verData = 'sqlite'
+                    return verData
+                else:
+                    logging.critical('we do not support your database,our supported database type is:MySQL,SQLite(match case)')
+                    return False
+
+
+            except Exception as e:
+                logging.critical(e)
+                return False
+        else:
+            pass
 
 if __name__ == '__main__':
     a = config()
