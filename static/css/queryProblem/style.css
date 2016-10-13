@@ -69,68 +69,53 @@
     font-family: 'Audiowide', cursive, sans-serif;
 }
 
-.configure-form {
-    background: #00AD7C;
-    border-radius: 1rem;
-    color: #477998;
-    padding-top: 3rem;
+
+
+.intro-screen {
+    background: #FF512F; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to left, #FF512F , #F09819); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to left, #FF512F , #F09819); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    margin: 0 0 0 0;
+    max-width: none;
     padding-bottom: 3rem;
 }
 
-.configure-form h1,
-.configure-form h2,
-.configure-form h3,
-.configure-form h4,
-.configure-form h5,
-.configure-form h6 {
+.intro-screen h1,
+.intro-screen h2,
+.intro-screen h3,
+.intro-screen h4,
+.intro-screen h5,
+.intro-screen h6,
+.intro-screen p,
+.intro-screen span{
     color: #f9f2f4;
+
 }
 
-.configure-form p{
-    color: #52D681;
+.intro-screen a{
+    color: #FFF8B5;
+    transition-duration: 0.6s;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-family: 'Exo 2',"微软雅黑", sans-serif;
 }
 
-.configure-form a,
-.configure-form label{
-    color: #FFFFFF;
-    transition: 0.25s;
+.intro-screen a:hover {
+    color: #00032D;
+    text-decoration: none;
 }
 
-.configure-form a:hover,
-.configure-form label:hover{
-    color: #FFF84D;
+.intro-screen .site-title {
+    color: #FFC47F;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: solid #f9f2f4 0.2rem;
+    margin-bottom: 1rem;
+    font-family: 'Audiowide', cursive, sans-serif;
 }
 
-.configure-form input,
-.configure-form select{
-    border-radius: 0.4rem;
-    border-width: 0.15rem;
-    border-color: #f9f2f4;
-    font-family: "Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
-    -webkit-transition: border 0.25s linear, color 0.25s linear, background-color 0.25s linear;
-    transition: border 0.25s linear, color 0.25s linear, background-color 0.25s linear;
-}
 
-.configure-form input:hover,
-.configure-form input:active{
-    border-color: #B5FF7D;
-}
 
-.configure-form button {
-    border-radius: 0.5rem;
-    padding-left: 3rem;
-    padding-right: 3rem;
-}
-
-.configure-form .submit-button {
-    background-color: #D3504A;
-    color: #FFFFFF;
-    transition-duration: 0.5s;
-}
-
-.configure-form .submit-button:hover{
-    background-color: #A63636;
-}
 
 code {
     background: #f9f2f4;

@@ -3,11 +3,17 @@
 {% block content %}
     <div class="row">
         <div class="medium-8 medium-offset-2">
-            <h3 class="text-center">配置出错<small>{{ status_code }}</small></h3>
-            <p>Woo</p>
-            <p>很抱歉，这个站点已经配置好了所有的参数，所以这个选项暂时被关闭了。</p>
+            <h3 class="text-center">无法配置<small>{{ status_code }}</small></h3>
+            <p>哇哦</p>
+
+            {% if status_code == 403 %}
+            <p>如果这个站点已经配置好了所有的参数，所以您无法配置这个站点。</p>
             <hr />
-            <p>如果你需要重新配置整个站点，请您移除位于主文件夹configure下的ini文件即可。</p>
+            <p>如果你需要重新配置整个站点，请您移除位于主文件夹<code>configure</code>下的<code>ini</code>配置文件即可。</p>
+            {% elif status_code == 500 %}
+            <p>内部服务器逻辑错误,请您查看日志获得详细情况。</p>
+            <p>如果您发现了BUG，请在<span class="fa fa-github"></span>上告诉我们。</p>
+            {% end %}
         </div>
     </div>
 {% end %}

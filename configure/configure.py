@@ -15,7 +15,7 @@ class config:
     '''
     configExist = False
     databaseConnect = False
-
+    configFilePath = None
     def __init__(self):
         pass
 
@@ -54,9 +54,12 @@ class config:
         configFilePath = os.path.join(os.path.dirname(__file__), "config.ini")
         if os.path.isfile(configFilePath):
             self.configExist = True
+            self.configFilePath = configFilePath
         else:
             infoString = 'Configuration file does not exist or set incorrect ,you will specify the options manually.'
             logging.warning(infoString)
+            self.configExist=False
+            self.configFilePath  =None
 
     def checkDatabase(self):
         # default : MySQL
@@ -64,6 +67,7 @@ class config:
             import ConfigParser
             import sqlalchemy
             configParser = ConfigParser.ConfigParser()
+            configParser.read(self.configFilePath)
             try:
                 databaseType = configParser.get('database','type')
                 databaseUser = configParser.get('database','user')
@@ -78,7 +82,7 @@ class config:
                     cur = con.cursor()
                     cur.execute("SELECT VERSION()")
                     data = cur.fetchone()
-                    logging.info("Database version : %s ") % data
+                    logging.info("Database version : %s " % data[0])
                     con.close()
                 elif databaseType == 'SQLite':
                     import sqlite3

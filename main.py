@@ -7,7 +7,7 @@ import os
 from configure import configure
 from tornado.options import define, options
 define("port", default=8000, help="run on the given port", type=int)
-
+import logging
 # enable jinja2
 
 class IndexHandler(tornado.web.RequestHandler):
@@ -22,15 +22,15 @@ class configureHandler(tornado.web.RequestHandler):
         conf = configure.config()
         conf.runTest()
         if conf.configExist and conf.databaseConnect :
-            raise tornado.web.HTTPError('403')
+            raise tornado.web.HTTPError(403)
         else:
-            self.render('configure/changeConf.html')
+            self.render('configure/changeConf.html',error=False)
 
     def post(self, *args, **kwargs):
         conf = configure.config()
         conf.runTest()
         if conf.configExist and conf.databaseConnect :
-            raise tornado.web.HTTPError('403')
+            raise tornado.web.HTTPError(403)
         else:
             pass
         databaseType = self.get_argument('databaseType')
@@ -44,9 +44,9 @@ class configureHandler(tornado.web.RequestHandler):
         if ver:
             conf.saveConfFiles(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
             # finished...
-            self.render('configure/result.html',locals())
+            self.render('configure/result.html',ver=ver)
         else:
-            self.render('configure/changeConf.html')
+            self.render('configure/changeConf.html',error=True)
 
     def write_error(self, status_code, **kwargs):
         self.render('configure/error.html',status_code=status_code)
@@ -66,7 +66,8 @@ if __name__ == "__main__":
     app = tornado.web.Application(
         handlers=[
             (r"/", IndexHandler),
-            (r"^/configure/",configureHandler)
+            (r"^/configure/",configureHandler),
+            (r"^/query/",'acmCralwer.view.queryHandler')
 
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
