@@ -7,4 +7,7 @@ class queryHandler(tornado.web.RequestHandler):
         self.render('queryProblem/index.html',error=False)
 
     def post(self, *args, **kwargs):
+        mainName = self.get_argument("mainName")
+        viceName = self.get_argument("viceName", None)
+
         self.render('queryProblem/query.html')
