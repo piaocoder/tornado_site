@@ -25,10 +25,45 @@
             </ul>
         </div>
     </div>
-    <div class="row">
-        <div class="columns medium-8 medium-offset-2">
-            <form>
-                <h5 class="text-center">你需要输入你的用户名</h5>
+    <div class="row query-form">
+        <div class="columns medium-8 medium-offset-2 query-chart">
+            <form action="/query/" method="get">
+                <div class="row query-item">
+                    <h5 class="text-center">查询题量</h5>
+                </div>
+                {% if error %}
+                <div class="row query-item">
+                    <div class="column medium-10 medium-offset-1">
+                        <h5 class="text-center">出现错误</h5>
+                        <p>格式不满足要求，两个账号均应由数字、大小写字母和下划线组成。</p>
+                        <p>如果您确实有特殊账号需要查询，请fork项目自行修改即可。</p>
+                    </div>
+
+                </div>
+                {% end %}
+                <div class="row query-item">
+                    <div class="columns medium-10 medium-offset-1">
+                        <label><span data-tooltip  title="账号应由数字、大小写字母和下划线组成" >主账号</span>
+                            <input name="mainName" type="text" pattern="^[\u4e00-\u9fa5_a-zA-Z0-9]*$" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="row query-item">
+                    <div class="columns medium-10 medium-offset-1">
+                        <label><span data-tooltip  title="账号应由数字、大小写字母和下划线组成">副账号</span>
+                            <input name="viceName" type="text" pattern="^[\u4e00-\u9fa5_a-zA-Z0-9]+$">
+                        </label>
+                        <p class="help-text">如果您具有两个账号，并且想合并去重查询，您可以填入此项。</p>
+                    </div>
+                </div>
+                <div class="row query-item">
+                    <div class="columns medium-3 medium-offset-1">
+                        <button class="button alert form-submit-button" type="submit">提交</button>
+                    </div>
+                    <div class="columns medium-3">
+                        <button class="button primary form-reset-button" type="reset">重置</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>

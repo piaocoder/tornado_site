@@ -114,8 +114,126 @@
     font-family: 'Audiowide', cursive, sans-serif;
 }
 
+.query-form {
+    background: #02AAB0; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to bottom, #02AAB0 , #00CDAC); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to bottom, #02AAB0 , #00CDAC); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    padding: 3rem 4rem 3rem 4rem;
+    margin: 0 0 0 0;
+    max-width: none;
+    color: #FFFFFF;
+}
 
+.query-form .query-chart{
+    background: #00ADB5;
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+}
 
+.query-form h1,
+.query-form h2,
+.query-form h3,
+.query-form h4,
+.query-form h5,
+.query-form h6,
+.query-form p{
+    color: #393E46;
+}
+
+.query-form a{
+    color: #222831;
+    transition-duration: 0.6s;
+}
+
+.query-form a:hover,
+.query-form a:visited,
+.query-form a:focus{
+    color: #EEEEEE;
+}
+
+.query-chart .query-item{
+    color: #FFFFFF;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+}
+
+.query-chart .query-item h1,
+.query-chart .query-item h2,
+.query-chart .query-item h3,
+.query-chart .query-item h4,
+.query-chart .query-item h5,
+.query-chart .query-item h6,
+.query-chart .query-item p{
+    color: #FFFFFF;
+}
+
+.query-chart .query-item:first-child{
+    border-top-right-radius: 2rem;
+    border-top-left-radius: 2rem;
+}
+
+.query-chart .query-item:last-child{
+    border-bottom-right-radius: 2rem;
+    border-bottom-left-radius: 2rem;
+}
+
+.query-chart .query-item:nth-child(4n){
+    background: #12162F;
+}
+
+.query-chart .query-item:nth-child(4n+1){
+    background: #F24230;
+}
+
+.query-chart .query-item:nth-child(4n+2){
+    background: #F9BE6B;
+}
+
+.query-chart .query-item:nth-child(4n+3){
+    background: #5CA4A9;
+}
+
+.query-chart .query-item input{
+    border-radius: 0.5rem;
+    border: #00032D 0.1rem solid;
+    transition-duration: 0.7s;
+    transition-property: border;
+}
+
+.query-chart .query-item input:hover,
+.query-chart .query-item input:focus{
+    border-radius: 0.5rem;
+    border: #00F32D 0.15rem solid;
+}
+
+.query-chart .query-item .form-submit-button{
+    background-color: #EA384D;
+    border-radius: 1rem;
+    color: #FFFFFF;
+    transition-duration: 0.5s;
+    padding-left: 3rem;
+    padding-right: 3rem;
+}
+
+.query-chart .query-item .form-submit-button:hover{
+    background-color: #D31027;
+    transition-duration: 0.5s;
+}
+
+.query-chart .query-item .form-reset-button{
+    background-color: #4776E6;
+    border-radius: 1rem;
+    color: #f9f2f4;
+    transition-duration: 0.5s;
+    padding-left: 3rem;
+    padding-right: 3rem;
+}
+
+.query-chart .query-item .form-reset-button:hover{
+    background-color: #8E54E9;
+    color: #FFFFFF;
+    transition-duration: 0.5s;
+}
 
 code {
     background: #f9f2f4;
