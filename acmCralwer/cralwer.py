@@ -20,7 +20,7 @@ class crawler:
     wrongOJ = {}
     # match dictionary.dict[oj]:[acRegex],[submitRegex]
     matchDict = {}
-    supportedOJ = ['poj','hdu','zoj','codeforce','fzu','acdream','bzoj','ural','csu','hust','spoj','sgu','vjudge','bnu','cqu','uestc']
+    supportedOJ = ['poj','hdu','zoj','codeforces','fzu','acdream','bzoj','ural','csu','hust','spoj','sgu','vjudge','bnu','cqu','uestc']
     def __init__(self,queryName=''):
         '''
         This is the initial part which describe the crawler opener.
@@ -85,134 +85,261 @@ class crawler:
             print '# problem : ',acProblem
             # for submit
             try:
-                self.submitNum[oj]+=submission[0]
+                self.submitNum[oj]+=int(submission[0])
             except:
                 self.wrongOJ[oj] = name
                 continue
             # for AC merge all the information
             self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
-            print submission[0],acProblem
-            return submission[0], acProblem
+            #print submission[0],acProblem
+            #return submission[0], acProblem
 
-
-    def getPOJ(self,queryName=''):
+    def getACdream(self,queryName=''):
+        oj = 'acdream'
         if queryName == '':
             name = self.name
         else:
             name = queryName
         req = urllib2.Request(
-            url='http://poj.org/userstatus?user_id=' + name,
+            url='http://acdream.info/user/' + name,
             headers=self.headers
         )
+        html = ''
         try:
             html = self.opener.open(req).read()
         except:
-            self.wrongOJ['poj'].append(name)
+            self.wrongOJ[oj].append(name)
             return 0
-        '''
-        parser all html and extract all the information
-        '''
-        # for submit
-        submission = re.findall(r'<td align=center width=25%><a href=status\?user_id=.*?>([0-9]*?)</a>', html, re.S)
+        submission = re.findall('Submissions: <a href="/status\?name=.*?">([0-9]*?)</a>', html, re.S)
+        linkAddress = re.findall(
+            r'List of <span class="success-text">solved</span> problems</div>(.*?)<div class="block block-warning">',
+            html, re.S)
         try:
-            self.submitNum+=submission[0]
+            acProblem = re.findall(r'<a class="pid" href="/problem\?pid=[0-9]*?">([0-9]*?)</a>', linkAddress[0], re.S)
+            self.submitNum[oj] += int(submission[0])
         except:
-            self.wrongOJ['poj']=name
+            self.wrongOJ[oj].append(name)
             return 0
-        problem = re.findall(r'p\(([0-9]*?)\)', html, re.S)
-        # for AC merge all the information
-        self.acArchive['poj']=self.acArchive['poj'] | set(problem)
-        return submission[0],problem
+        self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+        return submission[0],acProblem
 
-    def getHDU(self,queryName=''):
+    def showsgu(self, queryName=''):
+        oj = 'sgu'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        postData = {
+            'find_id': name
+        }
+        postData = urllib.urlencode(postData)
+        req = urllib2.Request(
+            url='http://acm.sgu.ru/find.php',
+            headers=self.headers,
+            data=postData
+        )
+        html = ''
+        try:
+            html = self.opener.open(req, timeout=5).read()
+        except:
+            self.wrongOJ[oj].append(name)
+            return 0
+        sem = re.findall(r'</h5><ul><li>[0-9]*?.*?<a href=.teaminfo.php.id=([0-9]*?).>.*?</a></ul>', html, re.S)
+        # print sem
+        try:
+            temp = sem[0]
+            req = urllib2.Request(
+                url='http://acm.sgu.ru/teaminfo.php?id=' + str(temp),
+                headers=self.headers
+            )
+            result = self.opener.open(req, timeout=10)
+            html = result.read()
+            submission = re.findall(r'Submitted: ([0-9]*?)', html, re.S)
+            acProblem = re.findall(r'<font color=.*?>([0-9]*?)&#160</font>', html, re.S)
+            # get all the information
+            self.submitNum[oj]+=int(submission[0])
+            self.acArchive[oj] = self.acArchive[oj]|set(acProblem)
+            return submission[0],acProblem
+        except:
+            self.wrongOJ[oj].append(name)
+            return 0
+
+    def getcodeforces(self,queryName=''):
+        '''
+        get JSON information from codeforces API and parser it
+        :param queryName:
+        :return: Boolean value which indicates success
+        '''
+        oj = 'codeforces'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        loopFlag = True
+        loopTimes = 0
+        count = 1000
+        startItem = 1+loopTimes*count
+        endItem = (loopTimes+1)*count
+        while loopFlag:
+            '''
+            use cycle to travel the information
+            '''
+            loopTimes+=1
+            website = 'http://codeforces.com/api/user.status?handle=%s&from=%s&count=%s' %(name,startItem,endItem)
+            # try to get information
+            startItem = 1 + loopTimes * count
+            endItem = (loopTimes + 1) * count
+            # updating data...
+            try:
+                jsonString = urllib2.urlopen(website).read()
+            except:
+                self.wrongOJ[oj].append(name)
+                return 0
+            import json
+            data = json.loads(jsonString)
+            if data[u'status'] == u'OK':
+                if len(data[u'result']) == 0:
+                    break
+                else:
+                    pass
+                print data
+                # store the submit number
+                self.submitNum[oj] += len(data[u'result'])
+
+                # print self.subcf
+                for i in data[u'result']:
+                    # only accept AC problem
+                    if i[u'verdict'] == 'OK':
+                        problemInfo = i[u'problem']
+                        problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
+                        self.acArchive[oj].add(problemText)
+            else:
+                break
+        return True
+
+    def getSpoj(self, queryName=''):
+        oj = 'spoj'
         if queryName == '':
             name = self.name
         else:
             name = queryName
         req = urllib2.Request(
-            url='http://acm.hdu.edu.cn/userstatus.php?user=' + name,
+            url='http://www.spoj.com/users/%s'% name,
             headers=self.headers
         )
+        html = ''
         try:
             html = self.opener.open(req).read()
         except:
-            self.wrongOJ['hdu'].append(name)
+            self.wrongOJ[oj].append(name)
             return 0
-        '''
-        parser all html and extract all the information
-        '''
-        submission = re.findall(r'<td>Submissions</td><td align=center>([0-9]*?)</td>', html, re.S)
-        problem = re.findall('List of solved problems</font></h3>.*?<script.*?>(.*?)</script>', html, re.S)
-
-        # for submit
+        submission = re.findall(r'Solutions submitted</dt>.*?<dd>([0-9]*?)</dd>', html, re.S)
+        rawinfo = re.findall(r'<table class="table table-condensed">(.*?)</table>', html, re.S)
         try:
-            self.submitNum+=submission[0]
+            acProblem = re.findall(r'<a href="/status/.*?/">(.*?)</a>', rawinfo[0], re.S)
+            self.submitNum[oj]+=int(submission[0])
+            self.acArchive[oj]=self.acArchive[oj]|set(acProblem)
         except:
-            self.wrongOJ['hdu']=name
+            self.wrongOJ[oj].append(name)
             return 0
-        # for AC merge all the information
-        self.acArchive['hdu']=self.acArchive['hdu'] | set(problem)
-        return submission[0],problem
+        return submission[0],acProblem
 
-    def getZOJ(self,queryName=''):
+    def getVjudge(self,queryName=''):
+        '''
+        We will set up a cache pool to restore the cookie and keep it
+        :param queryName:
+        :return:
+        '''
+        oj = 'vjudge'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        VJheaders = {
+            'Host': 'vjudge.net',
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'deflate',
+            # 'Cookie':'ga=GA1.3.1416134436.1469179876',
+        }
+        publicAccountDict = {
+            'username': '2013300116',
+            'password': '8520967123'
+        }
+        loginReq = urllib2.Request(
+            url='http://vjudge.net/user/login',
+            data=urllib.urlencode(publicAccountDict),
+            headers=VJheaders
+        )
+        cookie = cookielib.CookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+        try:
+            # hold the cookie
+            response = opener.open(loginReq, timeout=5)
+        except Exception as e:
+            self.wrongOJ[oj] = name
+            return
+        # query the API
+        loopFlag = True
+        maxId = None
+        pageSize=100
+        status=None
+        while loopFlag:
+            req = urllib2.Request(
+                url='http://vjudge.net/user/submissions?username=%s&pageSize=%s&status=%s&maxId=%s' % (name, pageSize, status, maxId),
+                headers=VJheaders
+            )
+            try:
+                jsonString = opener.open(req).read()
+                dataDict = json.loads(jsonString)
+                dataList = dataDict['data']
+            except Exception as e:
+                self.wrongOJ[oj].append(name)
+                break
+            for vID, orignID, ojName, probID, result, execSeconds, execMemory, languages, codeLength, submitTime in dataList:
+                oj = ojName.lower()
+                # only extract AC status
+                if result == 'AC':
+                    if self.acArchive.has_key(oj):
+                        self.acArchive[oj].add(probID)
+                    else:
+                        # initialize the dict, insert value set
+                        self.acArchive[oj] = set([]).add(probID)
+                else:
+                    pass
+                self.submitNum[oj] += 1
+        return 1
+
+    def getUestc(self,queryName=''):
+        oj = 'uestc'
         if queryName == '':
             name = self.name
         else:
             name = queryName
         req = urllib2.Request(
-            url='http://acm.zju.edu.cn/onlinejudge/showUserStatus.do?handle=' + name,
-            headers=self.headers
+            url='http://acm.uestc.edu.cn/user/userCenterData/%s' % name,
+            headers=self.headers,
         )
         try:
-            html = self.opener.open(req).read()
+            jsonString = self.opener.open(req).read()
         except:
-            self.wrongOJ['hdu'].append(name)
+            self.wrongOJ[oj].append(name)
             return 0
-        '''
-        parser all html and extract all the information
-        '''
-        submission = re.findall(r'<td>Submissions</td><td align=center>([0-9]*?)</td>', html, re.S)
-        problem = re.findall('List of solved problems</font></h3>.*?<script.*?>(.*?)</script>', html, re.S)
-
-        # for submit
-        try:
-            self.submitNum+=submission[0]
-        except:
-            self.wrongOJ['zoj']=name
+        dataDict = json.loads(jsonString)
+        # detect AC item
+        if dataDict['result'] == 'error':
+            self.wrongOJ[oj].append(name)
             return 0
-        # for AC merge all the information
-        self.acArchive['zoj']=self.acArchive['zoj'] | set(problem)
-        return submission[0],problem
-
-    def getFZU(self,queryName=''):
-        if queryName == '':
-            name = self.name
         else:
-            name = queryName
-        req = urllib2.Request(
-            url='http://acm.fzu.edu.cn/user.php?uname=' + name,
-            headers=self.headers
-        )
-        try:
-            html = self.opener.open(req).read()
-        except:
-            self.wrongOJ['fzu'].append(name)
-            return 0
-        '''
-        parser all html and extract all the information
-        '''
-        submission = re.findall(r'<tr>.*?<td>Total Submitted</td>.*?<td>(.*?)</td>.*?</tr>', html, re.S)
-        problem = re.findall('<b><a href="problem\.php\?pid=[0-9]*?">([0-9].*?)</a></b>', html, re.S)
+            for dictItem in dataDict['problemStatus']:
+                if dictItem['status'] == 1:
+                    self.acArchive[oj].add(dictItem['problemId'])
+                else:
+                    pass
+            self.submitNum[oj] += len(dataDict['problemStatus'])
+        return 1
 
-        # for submit
-        try:
-            self.submitNum+=submission[0]
-        except:
-            self.wrongOJ['fzu']=name
-            return 0
-        # for AC merge all the information
-        self.acArchive['fzu']=self.acArchive['fzu'] | set(problem)
-        return submission[0],problem
 
 if __name__ == '__main__':
     a = crawler()
