@@ -27,7 +27,7 @@
     </div>
     <div class="row query-form">
         <div class="columns medium-8 medium-offset-2 query-chart">
-            <form action="/query/" method="get">
+            <form action="/query/" method="post">
                 <div class="row query-item">
                     <h5 class="text-center">查询题量</h5>
                 </div>
@@ -41,6 +41,7 @@
 
                 </div>
                 {% end %}
+
                 <div class="row query-item">
                     <div class="columns medium-10 medium-offset-1">
                         <label><span data-tooltip  title="账号应由数字、大小写字母和下划线组成" >主账号</span>
@@ -56,6 +57,7 @@
                         <p class="help-text">如果您具有两个账号，并且想合并去重查询，您可以填入此项。</p>
                     </div>
                 </div>
+                {% raw xsrf_form_html() %}
                 <div class="row query-item">
                     <div class="columns medium-3 medium-offset-1">
                         <button class="button alert form-submit-button" type="submit">提交</button>

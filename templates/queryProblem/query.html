@@ -1,10 +1,33 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    <!-- Add vue support for data change -->
+    <script src="//cdn.bootcss.com/vue/2.0.3/vue.min.js"></script>
+{% end %}
+
 {% block content %}
-    <div class="row" style="padding-top: 3rem;padding-bottom: 2rem">
+    <div class="row feature-screen" style="padding-top: 3rem;padding-bottom: 2rem">
         <div class="columns medium-10 medium-offset-1">
-            <h3 class="text-center site-title">NPUACM查题系统<small>beta</small></h3>
-            <p class="text-center">龙卷风那样快</p>
+            <h1 class="text-center site-title">NPUACM查题系统<small>beta</small></h1>
+            <p class="text-center">Like Tornado</p>
+            <!--<h3 class="text-center">在<a href="https://github.com/kidozh/tornado_site"><span class="fa fa-github"></span></a>上关注我们更多</h3>-->
         </div>
     </div>
+    <div class="row realtime-screen" id="realtime-screen">
+        <h2 class="text-center">实时情况查询<small>Websocket</small></h2>
+        
+    </div>
+{% end %}
+
+{% block script %}
+<script>
+    function queryInfo(mainName,viceName){
+
+    }
+    $(document).ready(function () {
+
+    });
+</script>
+
+
 {% end %}

@@ -39,7 +39,7 @@ if __name__ == "__main__":
         handlers=[
             (r"/", IndexHandler),
             (r"^/configure/",'configure.view.configureHandler'),
-            (r"^/query/",'acmCralwer.view.queryHandler')
+            (r"^/query/",'acmCralwer.view.queryIndexHandler')
 
         ],
         ui_modules={

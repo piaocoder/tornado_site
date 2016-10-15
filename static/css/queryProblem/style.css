@@ -301,3 +301,61 @@ pre {
     padding: 0.5rem 1rem 0.5rem 1rem;
     font-family: 'Ubuntu mono','Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
 }
+
+.feature-screen {
+    max-width: none;
+    margin: 0 0 0 0;
+
+    background: #EB3349; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to bottom, #EB3349, #F45C43); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to bottom, #EB3349, #F45C43); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.feature-screen h1,
+.feature-screen h2,
+.feature-screen h3,
+.feature-screen h4,
+.feature-screen h5,
+.feature-screen h6,
+.feature-screen p{
+    color: #f9f2f4;
+}
+
+.feature-screen a{
+    color: #FFC47F;
+    transition-duration: 0.6s;
+    transition-timing-function: ease;
+}
+
+.feature-screen a:hover {
+    color: #FFFFFF;
+    transition-duration: 0.6s;
+    transition-timing-function: ease;
+}
+
+.realtime-screen {
+    padding: 2rem 0 2rem 0;
+    background: #FFFFFF;
+    max-width: none;
+    margin: 0 0 0 0;
+}
+
+.realtime-screen h1,
+.realtime-screen h2,
+.realtime-screen h3,
+.realtime-screen h4,
+.realtime-screen h5,
+.realtime-screen h6,
+.realtime-screen p{
+    color:#444444;
+}
+
+.realtime-screen a{
+    color: #9bc200;
+    transition-duration: 0.7s;
+    transition-timing-function: ease-in;
+}
+
+.realtime-screen a:hover{
+    color: #52D681;
+}

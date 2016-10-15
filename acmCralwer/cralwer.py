@@ -47,6 +47,39 @@ class crawler:
         matchDict = {}
         matchDict['poj'] = {}
 
+    def getNoAuthRules(self):
+        import ConfigParser
+        import os
+        cf = ConfigParser.ConfigParser()
+        configFilePath = os.path.join(os.path.dirname(__file__), "regexDict.ini")
+        cf.read(configFilePath)
+        # travel all the useable site
+        return [(oj,cf.get(oj,'website'),cf.get(oj,'acRegex'),cf.get(oj,'submitRegex')) for oj in cf.sections()]
+
+    def followRules(self,oj,website,acRegex,submitRegex):
+        name = self.name
+        req = urllib2.Request(
+            url=website % name,
+            headers=self.headers
+        )
+        try:
+            html = self.opener.open(req).read(timeout=5)
+        except:
+            self.wrongOJ[oj].append(name)
+            return 0
+        submission = re.findall(submitRegex, html, re.S)
+        acProblem = re.findall(acRegex, html, re.S)
+        print '# submission : ', submission
+        print '# problem : ', acProblem
+        # for submit
+        try:
+            self.submitNum[oj] += int(submission[0])
+        except:
+            self.wrongOJ[oj] = name
+            return 0
+        # for AC merge all the information
+        self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+        return 1
 
     def getInfoNoAuth(self,queryName='kidozh'):
         '''
@@ -366,10 +399,15 @@ class crawler:
                 pass
         return totalNum
 
+    def changeCurrentName(self,name):
+        self.name = name
+        return True
+
 
 
 if __name__ == '__main__':
     a = crawler(queryName='kidozh')
+    print a.getNoAuthRules()
     a.getInfoNoAuth()
     a.getACdream()
     a.getcodeforces()
