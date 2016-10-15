@@ -202,7 +202,6 @@ class crawler:
                     break
                 else:
                     pass
-                print data
                 # store the submit number
                 self.submitNum[oj] += len(data[u'result'])
 
@@ -309,6 +308,8 @@ class crawler:
                 else:
                     pass
                 self.submitNum[oj] += 1
+                # vjudge's submit is not added to total number
+                self.submitNum['vjudge']+=1
         return 1
 
     def getUestc(self,queryName=''):
@@ -340,7 +341,40 @@ class crawler:
             self.submitNum[oj] += len(dataDict['problemStatus'])
         return 1
 
+    def getTotalACNum(self):
+        '''
+        get the total number from dictionary that store the AC data.
+        :return: the total AC's
+        '''
+        totalNum = 0
+        for key,value in self.acArchive.items():
+            # value should be a set
+            totalNum += len(value)
+        return totalNum
+
+    def getTotalSubmitNum(self):
+        '''
+        get the total number from dictionary that store the submit data
+        :return:
+        '''
+        totalNum = 0
+        for key,value in self.submitNum.items():
+            if key != 'vjudge':
+                totalNum += int(value)
+            else:
+                # discard the submission data about vjudge
+                pass
+        return totalNum
+
+
 
 if __name__ == '__main__':
-    a = crawler()
+    a = crawler(queryName='kidozh')
     a.getInfoNoAuth()
+    a.getACdream()
+    a.getcodeforces()
+    a.getSpoj()
+    a.getUestc()
+    a.getVjudge()
+    print a.acArchive
+    print a.submitNum

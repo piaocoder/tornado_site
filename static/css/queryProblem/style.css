@@ -66,7 +66,7 @@
 .site-title ,
 .menu-text,
 .title-bar-title{
-    font-family: 'Audiowide', cursive, sans-serif;
+    font-family: 'Audiowide', cursive, "微软雅黑",sans-serif;
 }
 
 
@@ -244,25 +244,52 @@ code {
 }
 
 footer {
-    background: #FAF99F;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace,sans-serif;
+    background: #00AD7C;
+    padding-top: 1rem;
+    padding-bottom: 2.5rem;
+    font-family: 'Exo 2','Roboto',"Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+    margin-bottom: 2rem;
 }
 
+footer *{
+    font-family: 'Exo 2','Roboto',"Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+}
+
+footer .list-unstyled{
+    list-style: none;
+}
+
+footer h1,
+footer h2,
+footer h3,
+footer h4,
+footer h5,
+footer h6,
 footer p{
-    color: #D65F5F;
+    color: #FFF8B5;
+
     font-size: 1.3rem;
     margin-bottom: 0;
 }
 
 footer a{
-    color: #78D8D0;
+    color: #B5FF7D;
     transition-duration: 0.5s;
 }
 
 footer a:hover{
-    color: #A1F6B6;
+    color: #52D681;
+    transition-duration: 0.75s;
+}
+
+footer .resume {
+    border-right: #f9f2f4 solid 0.2rem;
+    transition-duration: 0.3s;
+    transition-timing-function:cubic-bezier(0.55, 0.09, 0.68, 0.53);
+}
+
+footer .resume:hover{
+    border-right-width: 0;
 }
 
 pre {
