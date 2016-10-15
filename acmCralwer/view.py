@@ -40,11 +40,12 @@ class queryInfoHandler(tornado.web.RequestHandler):
         viceName = self.get_argument("viceName", None)
         if self.isNameValid(mainName):
             import cralwer
+            import json
             query = cralwer.crawler(queryName=mainName)
             # non-block part
             for oj,website,acRegex,submitRegex in query.getNoAuthRules():
                 # non-block for each OJ
-                yield tornado.gen.Task(query.followRules(oj,website,acRegex,submitRegex))
+                yield tornado.gen.Task(query.followRules(oj , website , acRegex , submitRegex))
             # for other oj
             yield tornado.gen.Task(query.getACdream())
             yield tornado.gen.Task(query.getVjudge())
@@ -53,12 +54,15 @@ class queryInfoHandler(tornado.web.RequestHandler):
             yield tornado.gen.Task(query.getcodeforces())
             # prepare the json
             dataDict = {}
-            self.finish()
+            dataDict['ac'] = query.acArchive
+            dataDict['submit'] = query.submitNum
+            dataDict['wrongOJ'] = query.wrongOJ
+            self.finish(json.dumps(dataDict))
 
 
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
-        if viceName and self.isNameValid(viceName):0
+        if viceName and self.isNameValid(viceName):
             query.changeCurrentName(viceName)
 
 

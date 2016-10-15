@@ -37,9 +37,10 @@ if __name__ == "__main__":
     }
     app = tornado.web.Application(
         handlers=[
-            (r"/", IndexHandler),
+            (r"^/", IndexHandler),
             (r"^/configure/",'configure.view.configureHandler'),
-            (r"^/query/",'acmCralwer.view.queryIndexHandler')
+            (r"^/query/",'acmCralwer.view.queryIndexHandler'),
+            (r"^/query/api/",'acmCralwer.view.queryInfoHandler')
 
         ],
         ui_modules={
