@@ -2,6 +2,10 @@
 __author__ = 'exbot'
 import tornado.web
 import tornado.gen
+import tornado.httpclient
+import datetime
+import urllib2
+
 class queryIndexHandler(tornado.web.RequestHandler):
     def get(self, *args, **kwargs):
         self.render('queryProblem/index.html',error=False)
@@ -34,7 +38,8 @@ class queryIndexHandler(tornado.web.RequestHandler):
 
 class queryInfoHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
-    @tornado.gen.engine
+    #@tornado.gen.engine
+    @tornado.gen.coroutine
     def get(self, *args, **kwargs):
         mainName = self.get_argument("mainName")
         viceName = self.get_argument("viceName", None)
@@ -42,28 +47,97 @@ class queryInfoHandler(tornado.web.RequestHandler):
             import cralwer
             import json
             query = cralwer.crawler(queryName=mainName)
+            client = tornado.httpclient.AsyncHTTPClient()
             # non-block part
+            cnt = 0
             for oj,website,acRegex,submitRegex in query.getNoAuthRules():
                 # non-block for each OJ
-                yield tornado.gen.Task(query.followRules(oj , website , acRegex , submitRegex))
-            # for other oj
-            yield tornado.gen.Task(query.getACdream())
-            yield tornado.gen.Task(query.getVjudge())
-            yield tornado.gen.Task(query.getUestc())
-            yield tornado.gen.Task(query.getSpoj())
-            yield tornado.gen.Task(query.getcodeforces())
-            # prepare the json
-            dataDict = {}
-            dataDict['ac'] = query.acArchive
-            dataDict['submit'] = query.submitNum
-            dataDict['wrongOJ'] = query.wrongOJ
-            self.finish(json.dumps(dataDict))
+                cnt +=1
+                url = website %mainName
+                req = tornado.httpclient.HTTPRequest(url,headers=query.headers,request_timeout=5)
+                response =  yield tornado.gen.Task(client.fetch,req)
+                if response.code == 200:
+                    query.actRegexRules(response.body,acRegex,submitRegex,oj)
+                else:
+                    pass
+
+            # uestc
+            acdreamURL = 'http://acm.uestc.edu.cn/user/userCenterData/%s' %mainName
+            response = yield tornado.gen.Task(client.fetch,acdreamURL,headers=query.headers)
+            if response.code == 200:
+                query.getAsyncUestc(response.body)
+                print 'uestc',datetime.datetime.now()
+            else:
+                pass
+
+            acdreamURL = 'http://acdream.info/user/%s' % mainName
+            response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
+            if response.code == 200:
+                query.getAsyncACdream(response.body)
+                print 'acdream',datetime.datetime.now()
+            else:
+                pass
+
+            #codeforces and vjudge blocking part
+            query.getcodeforces()
+            query.getVjudge()
+
+
 
 
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
         if viceName and self.isNameValid(viceName):
             query.changeCurrentName(viceName)
+            import cralwer
+            import json
+            query = cralwer.crawler(queryName=viceName)
+            client = tornado.httpclient.AsyncHTTPClient()
+            # non-block part
+            cnt = 0
+            for oj, website, acRegex, submitRegex in query.getNoAuthRules():
+                # non-block for each OJ
+                cnt += 1
+                url = website % viceName
+                req = tornado.httpclient.HTTPRequest(url, headers=query.headers, request_timeout=5)
+                response = yield tornado.gen.Task(client.fetch, req)
+                if response.code == 200:
+                    query.actRegexRules(response.body, acRegex, submitRegex, oj)
+                else:
+                    pass
+
+            # uestc
+            acdreamURL = 'http://acm.uestc.edu.cn/user/userCenterData/%s' % viceName
+            response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
+            if response.code == 200:
+                query.getAsyncUestc(response.body)
+                print 'uestc', datetime.datetime.now()
+            else:
+                pass
+
+            acdreamURL = 'http://acdream.info/user/%s' % viceName
+            response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
+            if response.code == 200:
+                query.getAsyncACdream(response.body)
+                print 'acdream', datetime.datetime.now()
+            else:
+                pass
+
+            # codeforces and vjudge blocking part
+            query.getcodeforces()
+            query.getVjudge()
+        else:
+            pass
+        # prepare the json
+        dataDict = {}
+        # dataDict['ac'] = query.acArchive
+        dataDict['ac'] = {}
+        for key, value in query.acArchive.items():
+            dataDict['ac'][key] = list(value)
+        dataDict['submit'] = query.submitNum
+        dataDict['wrongOJ'] = query.wrongOJ
+        self.write(json.dumps(dataDict))
+        self.finish()
 
 
     def isNameValid(self, queryName):

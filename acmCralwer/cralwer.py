@@ -56,6 +56,21 @@ class crawler:
         # travel all the useable site
         return [(oj,cf.get(oj,'website'),cf.get(oj,'acRegex'),cf.get(oj,'submitRegex')) for oj in cf.sections()]
 
+    def actRegexRules(self,html,acRegex,submitRegex,oj):
+        submission = re.findall(submitRegex, html, re.S)
+        acProblem = re.findall(acRegex, html, re.S)
+        #print '# submission : ', submission
+        #print '# problem : ', acProblem
+        # for submit
+        try:
+            self.submitNum[oj] += int(submission[0])
+        except:
+            self.wrongOJ[oj].append(self.name)
+            return 0
+        # for AC merge all the information
+        self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+
+
     def followRules(self,oj,website,acRegex,submitRegex):
         name = self.name
         req = urllib2.Request(
@@ -79,7 +94,7 @@ class crawler:
             return 0
         # for AC merge all the information
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
-        return 1
+        return html
 
     def getInfoNoAuth(self,queryName='kidozh'):
         '''
@@ -155,6 +170,26 @@ class crawler:
             return 0
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
         return submission[0],acProblem
+
+    def getAsyncACdream(self,html,queryName=''):
+        oj = 'acdream'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        submission = re.findall('Submissions: <a href="/status\?name=.*?">([0-9]*?)</a>', html, re.S)
+        linkAddress = re.findall(
+            r'List of <span class="success-text">solved</span> problems</div>(.*?)<div class="block block-warning">',
+            html, re.S)
+        try:
+            acProblem = re.findall(r'<a class="pid" href="/problem\?pid=[0-9]*?">([0-9]*?)</a>', linkAddress[0], re.S)
+            self.submitNum[oj] += int(submission[0])
+        except:
+            self.wrongOJ[oj].append(name)
+            return 0
+        self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+        return submission[0], acProblem
+
 
     def showsgu(self, queryName=''):
         oj = 'sgu'
@@ -360,6 +395,23 @@ class crawler:
         except:
             self.wrongOJ[oj].append(name)
             return 0
+        dataDict = json.loads(jsonString)
+        # detect AC item
+        if dataDict['result'] == 'error':
+            self.wrongOJ[oj].append(name)
+            return 0
+        else:
+            for dictItem in dataDict['problemStatus']:
+                if dictItem['status'] == 1:
+                    self.acArchive[oj].add(dictItem['problemId'])
+                else:
+                    pass
+            self.submitNum[oj] += len(dataDict['problemStatus'])
+        return 1
+
+    def getAsyncUestc(self,jsonString):
+        oj = 'uestc'
+        name = self.name
         dataDict = json.loads(jsonString)
         # detect AC item
         if dataDict['result'] == 'error':
