@@ -99,6 +99,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 # non-block for each OJ
                 cnt += 1
                 url = website % viceName
+                # make up task
                 req = tornado.httpclient.HTTPRequest(url, headers=query.headers, request_timeout=5)
                 response = yield tornado.gen.Task(client.fetch, req)
                 if response.code == 200:
