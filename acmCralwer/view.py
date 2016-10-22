@@ -350,14 +350,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
 
-            # codeforces and vjudge blocking part
-            #query.getcodeforces()
-            #query.getVjudge()
-            # vjudge and codeforces
-
-
-        else:
-            pass
 
         # prepare the json
         dataDict = {}
