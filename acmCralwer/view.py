@@ -29,9 +29,9 @@ class queryIndexHandler(tornado.web.RequestHandler):
         mainName = self.get_argument("mainName")
         viceName = self.get_argument("viceName", None)
         # use regex to fill the match the name
-        if self.isNameValid(mainName):
+        if self.isNameValid(mainName) and self.isNameValid(viceName):
             # this name is valid...
-            self.render('queryProblem/query.html')
+            self.render('queryProblem/query.html',mainName=mainName,viceName=viceName)
         else:
             self.render('queryProblem/error.html',error=True)
 
@@ -186,8 +186,9 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     oj = ojName.lower()
                     # only extract AC status
                     if result == 'AC':
-                        if query.acArchive.has_key(oj):
+                        if query.acArchive.has_key(oj) and isinstance(query.acArchive[oj],set):
                             query.acArchive[oj].add(probID)
+                            query.acArchive['vjudge'].add(probID)
                         else:
                             # initialize the dict, insert value set
                             query.acArchive[oj] = set([])
@@ -331,6 +332,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     if result == 'AC':
                         if query.acArchive.has_key(oj):
                             query.acArchive[oj].add(probID)
+                            query.acArchive['vjudge'].add(probID)
                         else:
                             # initialize the dict, insert value set
                             query.acArchive[oj] = set([])
@@ -365,8 +367,12 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 print key,value
         dataDict['submit'] = query.submitNum
         dataDict['wrongOJ'] = query.wrongOJ
-        self.write(json.dumps(dataDict))
-        self.finish()
+        now = datetime.datetime.now()
+        import time
+        timestamp = time.mktime(now.timetuple())
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        #self.write()
+        self.finish(dataDict)
 
 
     def isNameValid(self, queryName):

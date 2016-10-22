@@ -19,7 +19,7 @@
         <h2 class="text-center">实时情况查询<small>Websocket</small></h2>
         
     </div>
-    <div class="row result-screen" id="result-screen" style="display: none">
+    <div class="row result-screen" id="result-screen" style="">
         <!-- this is result page and not shown until the query finished -->
         <div class="medium-8 medium-offset-2 table-scroll">
             <table id="result-table">
@@ -38,45 +38,74 @@
             </table>
         </div>
     </div>
+<!-- reveal -->
+<div class="reveal" id="modal" data-reveal>
+    <h1><span id="oj-name"></span>的具体AC题目</h1>
+    <p id="ac-problem" style="word-break: normal;word-wrap: break-word; "></p>
+    <button class="close-button" data-close aria-label="Close modal" type="button">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
 {% end %}
 
 {% block script %}
 <script>
+    var globalData = false;
     function queryInfo(mainName,viceName){
         xhr = $.ajax({
             url:"/query/api/",
             // data which api server can accept
             data:{
-                'mainName':mainName,
-                'viceName':viceName
+                mainName:mainName,
+                viceName:viceName,
+                timestamp: new Date().getTime()
             },
-            dataType:'json',
-            type:'GET',
+            dataType:"json",
+            type:"GET",
+            cache: false,
             success: function (data) {
+                globalData = data;
                 var tableData = [];
+                var cnt=0;
+                console.log(data['submit']);
                 for (var item in data['ac']){
+                    cnt+=1;
                     var ojInfo = [
+                            cnt,
                             item,
                             data['ac'][item].length,
-                            data['submit'][item].length,
-                            data['ac'][item]
+                            data['submit'][item],
+                            '<a href="javascript:getDetail(\'' + item+'\')">点击获得'+item+'的情况</a>'
                     ];
-                    tableData.push(ojInfo)
+                    console.log(ojInfo);
+                    tableData.push(ojInfo);
                 }
                 $('#result-table').DataTable({
-                    data:tableData
+                    data:tableData,
+                    buttons: [
+                        'copy', 'excel', 'pdf'
+                    ]
                 });
                 console.log(data);
             },
-            error: function (data) {
-                console.error(data);
+            error:function(){
+                alert('无法读取数据...');
             }
+
         });
 
 
     }
-    $(document).ready(function () {
 
+    function getDetail(oj){
+        $('#modal #oj-name').text(oj);
+        $('#modal #ac-problem').text(globalData['ac'][oj].join());
+        $('#modal').foundation('open');
+    }
+
+    $(document).ready(function () {
+        queryInfo('{{ mainName }}','{{ viceName }}');
     });
 </script>
 
