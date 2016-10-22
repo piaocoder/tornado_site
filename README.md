@@ -20,7 +20,9 @@ NWPU LAB
 
 # 项目依赖
 
+* Tornado
 * python-markdown
+* sqlalchemy
 
 -------------------------
 

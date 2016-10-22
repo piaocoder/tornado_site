@@ -5,8 +5,8 @@ LOGFILE = True
 # mail server settings
 MAIL_SERVER = "smtp.qq.com"
 MAIL_PORT = 465
-MAIL_USERNAME = "331837926@qq.com"
-MAIL_PASSWORD = "zhang8520967123"
+MAIL_USERNAME = "xxxxxx"
+MAIL_PASSWORD = "xxxxxx"
 
 # administrator list
 ADMINS = ["kidozh@kidozh.com", ]

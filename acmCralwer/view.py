@@ -66,7 +66,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
             response = yield tornado.gen.Task(client.fetch,acdreamURL,headers=query.headers)
             if response.code == 200:
                 query.getAsyncUestc(response.body)
-                print 'uestc',datetime.datetime.now()
             else:
                 pass
 
@@ -74,17 +73,138 @@ class queryInfoHandler(tornado.web.RequestHandler):
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
                 query.getAsyncACdream(response.body)
-                print 'acdream',datetime.datetime.now()
             else:
                 pass
+            print 'block part start'
+            #codeforces
+            oj = 'codeforces'
+            loopFlag = True
+            loopTimes = 0
+            count = 1000
+            startItem = 1+loopTimes*count
+            endItem = (loopTimes+1)*count
+            name = mainName
+            # loop start
+            while loopFlag:
+                '''
+                use cycle to travel the information
+                '''
+                loopTimes+=1
+                website = 'http://codeforces.com/api/user.status?handle=%s&from=%s&count=%s' %(name,startItem,endItem)
+                # try to get information
+                startItem = 1 + loopTimes * count
+                endItem = (loopTimes + 1) * count
+                # updating data...
+                try:
+                    # use async to rewrite the getting process
+                    req = tornado.httpclient.HTTPRequest(website,headers=query.headers,request_timeout=5)
+                    #jsonString = urllib2.urlopen(website).read()
+                    response =  yield tornado.gen.Task(client.fetch,req)
+                    if response.code == 200:
+                        jsonString = response.body
+                    else:
+                        # raise a exception
+                        raise BaseException
+                except:
+                    query.wrongOJ[oj].append(name)
+                    return
+                import json
+                data = json.loads(jsonString)
+                if data[u'status'] == u'OK':
+                    if len(data[u'result']) == 0:
+                        break
+                    else:
+                        pass
+                    # store the submit number
+                    query.submitNum[oj] += len(data[u'result'])
 
-            #codeforces and vjudge blocking part
-            query.getcodeforces()
-            query.getVjudge()
+                    # print self.subcf
+                    for i in data[u'result']:
+                        # only accept AC problem
+                        if i[u'verdict'] == 'OK':
+                            problemInfo = i[u'problem']
+                            problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
+                            query.acArchive[oj].add(problemText)
+                else:
+                    break
 
+            # vjudge async part
+            VJheaders = {
+                'Host': 'vjudge.net',
+                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'deflate',
+                # 'Cookie':'ga=GA1.3.1416134436.1469179876',
+            }
+            publicAccountDict = {
+                'username': '2013300116',
+                'password': '8520967123'
+            }
+            import urllib
+            website = 'http://vjudge.net/user/login'
+            authData = urllib.urlencode(publicAccountDict)
+            req = tornado.httpclient.HTTPRequest(website,headers=VJheaders,request_timeout=5,method='POST',body=authData)
+            response =  yield tornado.gen.Task(client.fetch,req)
+            #response = client.fetch(req)
+            if response.code == 200:
+                # auth successfully
+                print response.headers
+                cookieHeaders = response.headers
+                VJheaders['Cookie'] = cookieHeaders['set-Cookie']
+                print response.body
+            else:
+                print response
+                query.wrongOJ[oj] = name
+            # query the API
+            loopFlag = True
+            maxId = ''
+            pageSize=100
+            status=''
+            while loopFlag:
+                website = 'http://vjudge.net/user/submissions?username=%s&pageSize=%s&status=%s&maxId=%s' % (name, pageSize, status, maxId)
+                req = tornado.httpclient.HTTPRequest(website,headers=VJheaders,request_timeout=5)
+                response =  yield tornado.gen.Task(client.fetch,req)
+                #response = client.fetch(req)
+                if response.code == 200:
+                    # auth successfully
+                    jsonString = response.body
+                    dataDict = json.loads(jsonString)
+                    try:
+                        dataList = dataDict['data']
+                    except:
+                        query.wrongOJ[oj] = name
+                        break
+                else:
+                    print response
+                    query.wrongOJ[oj] = name
+                    break
+                if len(dataList) <= 1:
+                    break
+                else:
+                    pass
+                for vID, orignID, ojName, probID, result, execSeconds, execMemory, languages, codeLength, submitTime in dataList:
+                    oj = ojName.lower()
+                    # only extract AC status
+                    if result == 'AC':
+                        if query.acArchive.has_key(oj):
+                            query.acArchive[oj].add(probID)
+                        else:
+                            # initialize the dict, insert value set
+                            query.acArchive[oj] = set([])
+                            query.acArchive[oj].add(probID)
+                    else:
+                        pass
+                    if query.submitNum.has_key(oj):
+                            query.submitNum[oj] += 1
+                    else:
+                        # initialize the dict, insert value
+                        query.submitNum[oj] = 1
 
-
-
+                    # vjudge's submit is not added to total number
+                    query.submitNum['vjudge']+=1
+                maxId = dataList[-1][0]
+                print maxId
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
         if viceName and self.isNameValid(viceName):
@@ -131,10 +251,16 @@ class queryInfoHandler(tornado.web.RequestHandler):
             pass
         # prepare the json
         dataDict = {}
-        # dataDict['ac'] = query.acArchive
-        dataDict['ac'] = {}
+        dataDict['ac'] = query.acArchive
+        #dataDict['ac'] = {}
         for key, value in query.acArchive.items():
-            dataDict['ac'][key] = list(value)
+            if key:
+                try:
+                    dataDict['ac'][key] = list(value)
+                except:
+                    print key,value
+            else:
+                print key,value
         dataDict['submit'] = query.submitNum
         dataDict['wrongOJ'] = query.wrongOJ
         self.write(json.dumps(dataDict))

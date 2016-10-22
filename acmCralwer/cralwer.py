@@ -232,6 +232,8 @@ class crawler:
             self.wrongOJ[oj].append(name)
             return 0
 
+
+
     def getcodeforces(self,queryName=''):
         '''
         get JSON information from codeforces API and parser it
@@ -284,6 +286,73 @@ class crawler:
                 break
         return True
 
+    def asyncGetCodeforces(self,queryName=''):
+        '''
+        get JSON information from codeforces API and parser it
+        :param queryName:
+        :return: Boolean value which indicates success
+        '''
+        import tornado.httpclient
+        import tornado.gen
+        oj = 'codeforces'
+        print 'start CodeForce'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        loopFlag = True
+        loopTimes = 0
+        count = 1000
+        startItem = 1+loopTimes*count
+        endItem = (loopTimes+1)*count
+        # init async part
+        client = tornado.httpclient.AsyncHTTPClient()
+
+        # loop start
+        while loopFlag:
+            '''
+            use cycle to travel the information
+            '''
+            loopTimes+=1
+            website = 'http://codeforces.com/api/user.status?handle=%s&from=%s&count=%s' %(name,startItem,endItem)
+            # try to get information
+            startItem = 1 + loopTimes * count
+            endItem = (loopTimes + 1) * count
+            # updating data...
+            try:
+                # use async to rewrite the getting process
+                req = tornado.httpclient.HTTPRequest(website,headers=self.headers,request_timeout=5)
+                #jsonString = urllib2.urlopen(website).read()
+                response =  yield tornado.gen.Task(client.fetch,req)
+                if response.code == 200:
+                    jsonString = response.body
+                else:
+                    # raise a exception
+                    raise BaseException
+            except:
+                self.wrongOJ[oj].append(name)
+                return
+            import json
+            data = json.loads(jsonString)
+            if data[u'status'] == u'OK':
+                if len(data[u'result']) == 0:
+                    break
+                else:
+                    pass
+                # store the submit number
+                self.submitNum[oj] += len(data[u'result'])
+
+                # print self.subcf
+                for i in data[u'result']:
+                    # only accept AC problem
+                    if i[u'verdict'] == 'OK':
+                        problemInfo = i[u'problem']
+                        problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
+                        self.acArchive[oj].add(problemText)
+            else:
+                break
+
+
     def getSpoj(self, queryName=''):
         oj = 'spoj'
         if queryName == '':
@@ -317,11 +386,14 @@ class crawler:
         :param queryName:
         :return:
         '''
+        import tornado.httpclient
+        import tornado.gen
         oj = 'vjudge'
         if queryName == '':
             name = self.name
         else:
             name = queryName
+        client = tornado.httpclient.AsyncHTTPClient()
         VJheaders = {
             'Host': 'vjudge.net',
             'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
@@ -368,7 +440,7 @@ class crawler:
                 oj = ojName.lower()
                 # only extract AC status
                 if result == 'AC':
-                    if self.acArchive.has_key(oj):
+                    if self.acArchive.has_key(oj) :
                         self.acArchive[oj].add(probID)
                     else:
                         # initialize the dict, insert value set
@@ -379,6 +451,86 @@ class crawler:
                 # vjudge's submit is not added to total number
                 self.submitNum['vjudge']+=1
         return 1
+
+    def asyncGetVjudge(self,queryName=''):
+        '''
+        We will set up a cache pool to restore the cookie and keep it
+        tornado will use it
+        :param queryName:
+        :return:
+        '''
+        import tornado.httpclient
+        import tornado.gen
+        oj = 'vjudge'
+        if queryName == '':
+            name = self.name
+        else:
+            name = queryName
+        VJheaders = {
+            'Host': 'vjudge.net',
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'deflate',
+            # 'Cookie':'ga=GA1.3.1416134436.1469179876',
+        }
+        publicAccountDict = {
+            'username': '2013300116',
+            'password': '8520967123'
+        }
+        website = 'http://vjudge.net/user/login'
+        # init non-block part
+        client = tornado.httpclient.AsyncHTTPClient()
+        # auth
+        authData = urllib.urlencode(publicAccountDict)
+        req = tornado.httpclient.HTTPRequest(website,headers=self.headers,request_timeout=5,method='POST',body=authData)
+
+        cookie = cookielib.CookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+        # client fetch the data
+        print 'yes'
+        response =  yield tornado.gen.Task(client.fetch,req)
+        #response = client.fetch(req)
+        if response.code == 200:
+            # auth successfully
+            print response
+            pass
+        else:
+            print response
+            self.wrongOJ[oj] = name
+            return
+        # query the API
+        loopFlag = True
+        maxId = None
+        pageSize=100
+        status=None
+        while loopFlag:
+            req = urllib2.Request(
+                url='http://vjudge.net/user/submissions?username=%s&pageSize=%s&status=%s&maxId=%s' % (name, pageSize, status, maxId),
+                headers=VJheaders
+            )
+            try:
+                jsonString = opener.open(req).read()
+                dataDict = json.loads(jsonString)
+                dataList = dataDict['data']
+            except Exception as e:
+                self.wrongOJ[oj].append(name)
+                break
+            for vID, orignID, ojName, probID, result, execSeconds, execMemory, languages, codeLength, submitTime in dataList:
+                oj = ojName.lower()
+                # only extract AC status
+                if result == 'AC':
+                    if self.acArchive.has_key(oj):
+                        self.acArchive[oj].add(probID)
+                    else:
+                        # initialize the dict, insert value set
+                        self.acArchive[oj] = set([]).add(probID)
+                else:
+                    pass
+                self.submitNum[oj] += 1
+                # vjudge's submit is not added to total number
+                self.submitNum['vjudge']+=1
+        return
 
     def getUestc(self,queryName=''):
         oj = 'uestc'
@@ -459,7 +611,9 @@ class crawler:
 
 if __name__ == '__main__':
     a = crawler(queryName='kidozh')
-    print a.getNoAuthRules()
+    print a.asyncGetVjudge()
+
+    '''print a.getNoAuthRules()
     a.getInfoNoAuth()
     a.getACdream()
     a.getcodeforces()
@@ -468,3 +622,4 @@ if __name__ == '__main__':
     a.getVjudge()
     print a.acArchive
     print a.submitNum
+    '''
