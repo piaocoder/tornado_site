@@ -348,7 +348,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 maxId = dataList[-1][0]
                 print maxId
         else:
-            raise tornado.web.HTTPError(500,log_message='Invalid name')
+            pass
 
 
         # prepare the json

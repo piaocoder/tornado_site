@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 
 {% block head %}
-    <!-- Add vue support for data change -->
-    <script src="//cdn.bootcss.com/vue/2.0.3/vue.min.js"></script>
+    <!-- Add dataTable support for data change -->
+    <link href="//cdn.bootcss.com/datatables/1.10.12/css/dataTables.foundation.min.css" rel="stylesheet">
+    <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.bootcss.com/datatables/1.10.12/js/dataTables.foundation.js"></script>
 {% end %}
 
 {% block content %}
@@ -17,11 +19,60 @@
         <h2 class="text-center">实时情况查询<small>Websocket</small></h2>
         
     </div>
+    <div class="row result-screen" id="result-screen" style="display: none">
+        <!-- this is result page and not shown until the query finished -->
+        <div class="medium-8 medium-offset-2 table-scroll">
+            <table id="result-table">
+                <thead>
+                    <tr>
+                        <th> # </th>
+                        <th> 查询的OJ </th>
+                        <th> 通过 </th>
+                        <th> 提交 </th>
+                        <th> 查看具体题目 </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% end %}
 
 {% block script %}
 <script>
-    function queryInfo(mainName){
+    function queryInfo(mainName,viceName){
+        xhr = $.ajax({
+            url:"/query/api/",
+            // data which api server can accept
+            data:{
+                'mainName':mainName,
+                'viceName':viceName
+            },
+            dataType:'json',
+            type:'GET',
+            success: function (data) {
+                var tableData = [];
+                for (var item in data['ac']){
+                    var ojInfo = [
+                            item,
+                            data['ac'][item].length,
+                            data['submit'][item].length,
+                            data['ac'][item]
+                    ];
+                    tableData.push(ojInfo)
+                }
+                $('#result-table').DataTable({
+                    data:tableData
+                });
+                console.log(data);
+            },
+            error: function (data) {
+                console.error(data);
+            }
+        });
+
 
     }
     $(document).ready(function () {
