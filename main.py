@@ -9,7 +9,7 @@ import os
 from tornado.options import define, options
 
 
-define("port", default=8000, help="run on the given port", type=int)
+define("port", default=8002, help="run on the given port", type=int)
 import logging
 # enable jinja2
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="08cc4cf4-9bab-4012-9bcd-91fdb76157f2" name="tencentCloud" url="http://115.159.115.19">
+        <fileTransfer host="115.159.115.19" port="21" password="dff0dfc2dfcbdfc4dfcddf92df9fdf98df9adf93df9cdf9d" username="ubuntu">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

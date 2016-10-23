@@ -41,7 +41,7 @@
 <!-- reveal -->
 <div class="reveal" id="modal" data-reveal>
     <h1><span id="oj-name"></span>的具体AC题目</h1>
-    <p id="ac-problem" style="word-break: normal;word-wrap: break-word; "></p>
+    <p id="ac-problem" style="word-break: break-all;word-wrap: break-word; "></p>
     <button class="close-button" data-close aria-label="Close modal" type="button">
         <span aria-hidden="true">&times;</span>
     </button>
@@ -68,9 +68,15 @@
                 globalData = data;
                 var tableData = [];
                 var cnt=0;
+                var totAC=0;
+                var totSubmit = 0;
                 console.log(data['submit']);
                 for (var item in data['ac']){
                     cnt+=1;
+                    if (item != 'vjudge'){
+                        totAC+=data['ac'][item].length;
+                        totSubmit+=data['submit'][item];
+                    }
                     var ojInfo = [
                             cnt,
                             item,
@@ -78,9 +84,17 @@
                             data['submit'][item],
                             '<a href="javascript:getDetail(\'' + item+'\')">点击获得'+item+'的情况</a>'
                     ];
-                    console.log(ojInfo);
+                    //console.log(ojInfo);
                     tableData.push(ojInfo);
                 }
+                var totInfo = [
+                        cnt+1,
+                        '合计',
+                        totAC,
+                        totSubmit,
+                        ''
+                ];
+                tableData.push(totInfo);
                 $('#result-table').DataTable({
                     data:tableData,
                     buttons: [
@@ -99,7 +113,7 @@
     }
 
     function getDetail(oj){
-        $('#modal #oj-name').text(oj);
+        $('#modal #oj-name').text(oj.toUpperCase());
         $('#modal #ac-problem').text(globalData['ac'][oj].join());
         $('#modal').foundation('open');
     }
