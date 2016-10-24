@@ -9,7 +9,7 @@ import os
 from tornado.options import define, options
 
 
-define("port", default=8002, help="run on the given port", type=int)
+define("port", default=8000, help="run on the given port", type=int)
 import logging
 # enable jinja2
 
@@ -34,21 +34,21 @@ if __name__ == "__main__":
     settings = {
         "xsrf_cookies": True,
         "login_url": "/login",
+        "static_path": os.path.join(os.path.dirname(__file__), "static"),
     }
     app = tornado.web.Application(
         handlers=[
             (r"^/", IndexHandler),
             (r"^/configure/",'configure.view.configureHandler'),
             (r"^/query/",'acmCralwer.view.queryIndexHandler'),
-            (r"^/query/api/",'acmCralwer.view.queryInfoHandler')
-
+            (r"^/query/api/",'acmCralwer.view.queryInfoHandler'),
         ],
         ui_modules={
             'getSetting':uimodule.settingOptionModule,
         },
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
-        debug=True,
+        debug=False,
     )
     if hasattr(setting, "LOGFILE") and setting.LOGFILE:
         import logging

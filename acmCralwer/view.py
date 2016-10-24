@@ -3,8 +3,11 @@ __author__ = 'exbot'
 import tornado.web
 import tornado.gen
 import tornado.httpclient
+import tornado.websocket
 import datetime
 import urllib2
+import json
+import logging
 
 class queryIndexHandler(tornado.web.RequestHandler):
     def get(self, *args, **kwargs):
@@ -332,7 +335,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     if result == 'AC':
                         if query.acArchive.has_key(oj):
                             query.acArchive[oj].add(probID)
-                            query.acArchive['vjudge'].add(probID)
+                            query.acArchive['vjudge'].add('%s%s' %oj, probID)
                         else:
                             # initialize the dict, insert value set
                             query.acArchive[oj] = set([])
@@ -384,4 +387,69 @@ class queryInfoHandler(tornado.web.RequestHandler):
         import re
         return re.match(r'^\w*$', queryName)
 
+class echoProblemHandler(tornado.websocket.WebSocketHandler):
+    waiter = set([])
+    cache = []
+    cache_size = 200
+    def open(self, *args, **kwargs):
+        msgDict = {}
+        # 0 : connect start
+        # 1 : right ,give answer
+        # 2 : wrong , give reason
+        # 3 : shutdown websocket
+        msgDict['result'] = 0
+        # response Text
+        msgDict['response-Text'] = 'Websocket成功连接'
+        msgDict['response-Time'] = ''
+        self.write_message(json.dumps(msgDict))
 
+    def on_message(self, message):
+        msgDict = {}
+        # 0 : connect start
+        # 1 : right ,give answer
+        # 2 : wrong , give reason
+        # 3 : shutdown websocket
+        msgDict['result'] = 0
+        # response Text
+        msgDict['response-Text'] = 'Websocket成功连接'
+        msgDict['response-Time'] = ''
+        self.write_message(json.dumps(msgDict))
+
+    def on_close(self):
+        msgDict = {}
+        # 0 : connect start
+        # 1 : right ,give answer
+        # 2 : wrong , give reason
+        # 3 : shutdown websocket
+        msgDict['result'] = 3
+        # response Text
+        msgDict['response-Text'] = 'GoodBye~'
+        msgDict['response-Time'] = ''
+        self.write_message(json.dumps(msgDict))
+
+    @classmethod
+    def update_cache(cls, chat):
+        cls.cache.append(chat)
+        if len(cls.cache) > cls.cache_size:
+            cls.cache = cls.cache[-cls.cache_size:]
+
+    @classmethod
+    def sendInfo(cls,infoDict):
+        if isinstance(infoDict,dict):
+            mainName =infoDict['mainName']
+            viceName = infoDict['viceName']
+            aimOJ = infoDict['aimOJ']
+            ac = infoDict['ac']
+            submit = infoDict['submit']
+            msg = infoDict['msg']
+        else:
+            return False
+
+    @classmethod
+    def sendPublic(cls, chat):
+        logging.info("sending message to %d waiters", len(cls.waiters))
+        for waiter in cls.waiters:
+            try:
+                waiter.write_message(chat)
+            except:
+                logging.error("Error sending message", exc_info=True)
