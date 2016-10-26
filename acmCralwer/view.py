@@ -109,7 +109,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         raise BaseException
                 except:
                     query.wrongOJ[oj].append(name)
-                    return
+                    break
                 import json
                 data = json.loads(jsonString)
                 if data[u'status'] == u'OK':
@@ -120,7 +120,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     # store the submit number
                     query.submitNum[oj] += len(data[u'result'])
 
-                    # print self.subcf
                     for i in data[u'result']:
                         # only accept AC problem
                         if i[u'verdict'] == 'OK':
@@ -151,12 +150,9 @@ class queryInfoHandler(tornado.web.RequestHandler):
             #response = client.fetch(req)
             if response.code == 200:
                 # auth successfully
-                print response.headers
                 cookieHeaders = response.headers
                 VJheaders['Cookie'] = cookieHeaders['set-Cookie']
-                print response.body
             else:
-                print response
                 query.wrongOJ[oj] = name
             # query the API
             loopFlag = True
@@ -178,7 +174,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         query.wrongOJ[oj] = name
                         break
                 else:
-                    print response
                     query.wrongOJ[oj] = name
                     break
                 if len(dataList) <= 1:
@@ -207,7 +202,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     # vjudge's submit is not added to total number
                     query.submitNum['vjudge']+=1
                 maxId = dataList[-1][0]
-                print maxId
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
 
@@ -237,7 +231,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
                 query.getAsyncUestc(response.body)
-                print 'uestc', datetime.datetime.now()
             else:
                 pass
 
@@ -245,7 +238,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
                 query.getAsyncACdream(response.body)
-                print 'acdream', datetime.datetime.now()
             else:
                 pass
             # codeforces
@@ -278,8 +270,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         # raise a exception
                         raise BaseException
                 except:
-                    query.wrongOJ[oj].append(name)
-                    return
+                    #query.wrongOJ[oj].append(name)
+                    break
                 import json
                 data = json.loads(jsonString)
                 if data[u'status'] == u'OK':
@@ -290,7 +282,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     # store the submit number
                     query.submitNum[oj] += len(data[u'result'])
 
-                    # print self.subcf
                     for i in data[u'result']:
                         # only accept AC problem
                         if i[u'verdict'] == 'OK':
@@ -322,7 +313,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         query.wrongOJ[oj] = name
                         break
                 else:
-                    print response
                     query.wrongOJ[oj] = name
                     break
                 if len(dataList) <= 1:
@@ -351,7 +341,6 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     # vjudge's submit is not added to total number
                     query.submitNum['vjudge']+=1
                 maxId = dataList[-1][0]
-                print maxId
         else:
             pass
 
@@ -364,18 +353,20 @@ class queryInfoHandler(tornado.web.RequestHandler):
             if key:
                 try:
                     dataDict['ac'][key] = list(value)
-                except:
-                    print key,value
+                except Exception as e:
+                    logging.error(e)
+                    pass
             else:
-                print key,value
+                pass
         dataDict['submit'] = query.submitNum
         dataDict['wrongOJ'] = query.wrongOJ
         now = datetime.datetime.now()
         import time
         timestamp = time.mktime(now.timetuple())
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        #self.write()
-        self.finish(dataDict)
+        self.write(json.dumps(dataDict))
+        #self.finish(dataDict)
+        self.finish()
 
 
     def isNameValid(self, queryName):
@@ -388,7 +379,13 @@ class queryInfoHandler(tornado.web.RequestHandler):
         return re.match(r'^\w*$', queryName)
 
 class echoProblemHandler(tornado.websocket.WebSocketHandler):
-    waiter = set([])
+    clients = set([])
+    '''
+    client is a dict that contains:
+    mainName:''
+    viceName:''
+    renderTime:a timestamp that renders web.
+    '''
     cache = []
     cache_size = 200
     def open(self, *args, **kwargs):
@@ -402,18 +399,43 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
         msgDict['response-Text'] = 'Websocket成功连接'
         msgDict['response-Time'] = ''
         self.write_message(json.dumps(msgDict))
+        #echoProblemHandler.clients.add(self)
+
 
     def on_message(self, message):
+        '''
+        recieve the message and record one
+        :param message: a JSON that have those things
+        :return:
+        '''
+
         msgDict = {}
         # 0 : connect start
         # 1 : right ,give answer
         # 2 : wrong , give reason
         # 3 : shutdown websocket
-        msgDict['result'] = 0
-        # response Text
-        msgDict['response-Text'] = 'Websocket成功连接'
-        msgDict['response-Time'] = ''
-        self.write_message(json.dumps(msgDict))
+        try:
+            msgDict['result'] = 0
+            # response Text
+            msgDict['response-Text'] = 'Websocket成功连接'
+            msgDict['response-Time'] = ''
+            self.write_message(json.dumps(msgDict))
+            userInfo = json.loads(message)
+            # now record this info
+            infoDict = {}
+            infoDict['mainName'] = userInfo['mainName']
+            infoDict['viceName'] = userInfo['viceName']
+            infoDict['queryTime'] = userInfo['queryTime']
+            infoDict['revKey'] = userInfo['revKey']
+            infoDict['echoHandler'] = self
+            self.clients.add(infoDict)
+        except:
+            msgDict['result'] = 2
+            # response Text
+            msgDict['response-Text'] = 'Websocket连接失败'
+            msgDict['response-Time'] = ''
+            self.write_message(json.dumps(msgDict))
+
 
     def on_close(self):
         msgDict = {}
@@ -426,6 +448,7 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
         msgDict['response-Text'] = 'GoodBye~'
         msgDict['response-Time'] = ''
         self.write_message(json.dumps(msgDict))
+        echoProblemHandler.clients.remove(self)
 
     @classmethod
     def update_cache(cls, chat):
@@ -434,22 +457,25 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
             cls.cache = cls.cache[-cls.cache_size:]
 
     @classmethod
-    def sendInfo(cls,infoDict):
-        if isinstance(infoDict,dict):
-            mainName =infoDict['mainName']
-            viceName = infoDict['viceName']
-            aimOJ = infoDict['aimOJ']
-            ac = infoDict['ac']
-            submit = infoDict['submit']
-            msg = infoDict['msg']
+    def sendInfo(cls,revInfo,infoDict):
+        if isinstance(infoDict,dict) and isinstance(revInfo,dict):
+            # search for relative client
+            for client in cls.clients:
+                if client['mainName'] == revInfo['mainName'] \
+                and client['viceName'] == revInfo['viceName'] \
+                and client['queryTime'] == revInfo['queryTime'] \
+                and client['revKey'] == revInfo['revKey']:
+                    # send client and json
+                    client['echoHandler'].write_message(json.dumps(infoDict))
         else:
             return False
 
     @classmethod
     def sendPublic(cls, chat):
         logging.info("sending message to %d waiters", len(cls.waiters))
-        for waiter in cls.waiters:
+        for waiter in cls.clients:
             try:
                 waiter.write_message(chat)
             except:
                 logging.error("Error sending message", exc_info=True)
+

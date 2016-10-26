@@ -1,6 +1,6 @@
 #coding=utf-8
 __author__ = 'exbot'
-LOGFILE = True
+LOGFILE = False
 
 # mail server settings
 MAIL_SERVER = "smtp.qq.com"

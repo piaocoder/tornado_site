@@ -59,9 +59,10 @@
             data:{
                 mainName:mainName,
                 viceName:viceName,
-                timestamp: new Date().getTime()
+                timestamp: new Date().getTime(),
+                revKey:Math.random()
             },
-            dataType:"json",
+            //dataType:"json",
             type:"GET",
             cache: false,
             success: function (data) {
@@ -103,8 +104,10 @@
                 });
                 console.log(data);
             },
-            error:function(){
-                alert('无法读取数据...');
+            error:function (xhr, ajaxOptions, thrownError){
+                console.error(xhr.status);
+                console.error(thrownError);
+                alert('抱歉，数据出错...');
             }
 
         });
