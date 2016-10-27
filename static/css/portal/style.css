@@ -154,6 +154,7 @@ pre {
 .fullscreen .feature-screen {
     border-radius: .5rem;
     padding: 2rem 1rem 2rem 1rem;
+    margin:2rem 0.5rem 2rem 0.5rem;
 }
 
 .fullscreen .query-feature {
@@ -161,6 +162,12 @@ pre {
     background: #ee0979; /* fallback for old browsers */
     background: -webkit-linear-gradient(to left, #ee0979 , #ff6a00); /* Chrome 10-25, Safari 5.1-6 */
     background: linear-gradient(to left, #ee0979 , #ff6a00); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    transition-duration: 0.5s;
+}
+
+.fullscreen .query-feature:hover{
+    background: #ff6a00;
+    transition-duration: 0.5s;
 }
 
 .query-feature h1,
@@ -178,7 +185,12 @@ pre {
     background: #cb2d3e; /* fallback for old browsers */
     background: -webkit-linear-gradient(to left, #cb2d3e , #ef473a); /* Chrome 10-25, Safari 5.1-6 */
     background: linear-gradient(to left, #cb2d3e , #ef473a); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    transition-duration: 0.5s;
+}
 
+.fullscreen .more-feature:hover{
+    background: #ef473a;
+    transition-duration: 0.5s;
 }
 
 .more-feature *{
@@ -190,6 +202,12 @@ pre {
     background: #00c6ff; /* fallback for old browsers */
     background: -webkit-linear-gradient(to left, #00c6ff, #0072ff); /* Chrome 10-25, Safari 5.1-6 */
     background: linear-gradient(to left, #00c6ff, #0072ff); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    transition-duration: 0.5s;
+}
+
+.fullscreen .antiCheat-feature:hover {
+    background: #0072ff;
+    transition-duration: 0.5s;
 }
 
 .antiCheat-feature h1,
@@ -200,4 +218,92 @@ pre {
 .antiCheat-feature h6,
 .antiCheat-feature p{
     color: #f9f2f4;
+}
+
+.about-us {
+    max-width: none;
+    background: #2E383F;
+    padding-top: 1.5rem;
+}
+
+.about-us .title{
+    padding-top: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-right:#C2FCD9 0.2rem solid;
+}
+
+.about-us .title *{
+    color: #ECECEB;
+
+}
+
+.about-us .text{
+    padding-top: 2rem;
+    padding-left: 2rem;
+}
+
+.about-us .text *{
+    color: #f9f2f4;
+
+}
+
+.achieve {
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    max-width: none;
+    background: #136a8a; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to left, #136a8a , #267871); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to left, #136a8a , #267871); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.achieve .title{
+    color: #EEF2E2;
+}
+
+.achieve .item {
+    /*border-left: #F8DA5B 0.5rem solid;*/
+    margin-left: 1rem;
+    padding-left: 0.5rem;
+    padding-top: 0.3rem;
+    background: transparent;
+    transition-property: background;
+    transition-duration: 0.5s;
+}
+
+.achieve .item:hover {
+    border-radius: 0.5rem;
+    background: #1CD8D2; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to left, #1CD8D2, #93EDC7); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to left, #1CD8D2, #93EDC7); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.achieve .item:hover .title{
+    border-right: #FFFFFF 0.3rem solid;
+}
+
+.achieve .item:hover .title .location{
+    color: #f9f2f4;
+}
+
+.achieve .item *{
+    color: #F5F9EE;
+}
+
+.achieve .item a{
+    color: #F8DA5B;
+}
+
+.achieve .item a:hover,
+.achieve .item a:focus{
+    color: #ff6a00;
+}
+
+.achieve .title{
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    border-right: #00AD7C 0.3rem solid;
+}
+
+.achieve .title .location{
+    color: #0DE2EA;
 }
