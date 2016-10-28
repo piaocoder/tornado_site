@@ -121,8 +121,52 @@
         $('#modal').foundation('open');
     }
 
+    function getRealTimeInfo(mainName,viceName){
+        var domain = document.domain;
+        var websocketURL = 'ws://'+domain+':8000/query/realtime/';
+        if(window.WebSocket != undefined) {
+	        var connection = new WebSocket(websocketURL);
+        }
+        else{
+            alert('你的浏览器不支持websocket技术吗？')
+            return false;
+        }
+        var ws = new WebSocket(websocketURL);
+        // notice callback
+        ws.onmessage = function (event) {
+            console.log(event.data)
+            
+        };
+
+        ws.onerror=function(event){
+            console.error("Error: " + event);
+        };
+
+        ws.onclose = function(){
+            console.log('Disconnected');
+        };
+
+        ws.onopen = function(){
+            // append this to the server
+            var infoDict = {
+                mainName:'{{ mainName }}',
+                viceName:'{{ viceName }}',
+                queryTime:new Date().getTime(),
+                // gennerate key for unique...
+                revKey:Math.random()
+            };
+            ws.send(JSON.stringify(infoDict));
+            console.log(infoDict);
+        };
+
+        return ws;
+    }
+
     $(document).ready(function () {
         queryInfo('{{ mainName }}','{{ viceName }}');
+        var ws = getRealTimeInfo('{{ mainName }}','{{ viceName }}');
+        // send init information
+
     });
 </script>
 

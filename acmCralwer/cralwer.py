@@ -64,11 +64,13 @@ class crawler:
         # for submit
         try:
             self.submitNum[oj] += int(submission[0])
+            yield oj, len(set(acProblem)), submission[0]
         except:
             self.wrongOJ[oj].append(self.name)
-            return 0
+            yield 0,0,0
         # for AC merge all the information
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+
 
 
     def followRules(self,oj,website,acRegex,submitRegex):
@@ -186,9 +188,10 @@ class crawler:
             self.submitNum[oj] += int(submission[0])
         except:
             self.wrongOJ[oj].append(name)
-            return 0
+            return 0,0,0
+            #return 0
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
-        return submission[0], acProblem
+        return oj, len(acProblem),submission[0]
 
 
     def showsgu(self, queryName=''):
@@ -568,15 +571,17 @@ class crawler:
         # detect AC item
         if dataDict['result'] == 'error':
             self.wrongOJ[oj].append(name)
-            return 0
+            yield 0,0,0
         else:
+            ac = 0
             for dictItem in dataDict['problemStatus']:
                 if dictItem['status'] == 1:
                     self.acArchive[oj].add(dictItem['problemId'])
+                    ac += 1
                 else:
                     pass
             self.submitNum[oj] += len(dataDict['problemStatus'])
-        return 1
+            yield oj,ac,len(dataDict['problemStatus'])
 
     def getTotalACNum(self):
         '''

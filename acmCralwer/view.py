@@ -46,9 +46,18 @@ class queryInfoHandler(tornado.web.RequestHandler):
     def get(self, *args, **kwargs):
         mainName = self.get_argument("mainName")
         viceName = self.get_argument("viceName", None)
+        revKey = self.get_argument('revKey')
+        timestamp =self.get_argument('timestamp')
+
+        # for websocket auth
+        self.timestamp = timestamp
+        self.revKey = revKey
+        self.viceName = viceName
+        self.mainName = mainName
         if self.isNameValid(mainName):
             import cralwer
             import json
+            name = mainName
             query = cralwer.crawler(queryName=mainName)
             client = tornado.httpclient.AsyncHTTPClient()
             # non-block part
@@ -60,7 +69,12 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 req = tornado.httpclient.HTTPRequest(url,headers=query.headers,request_timeout=5)
                 response =  yield tornado.gen.Task(client.fetch,req)
                 if response.code == 200:
-                    query.actRegexRules(response.body,acRegex,submitRegex,oj)
+                    res = query.actRegexRules(response.body,acRegex,submitRegex,oj)
+                    otherInfo = ''
+                    ac = 0
+                    submit=0
+
+                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
                 else:
                     pass
 
@@ -68,14 +82,24 @@ class queryInfoHandler(tornado.web.RequestHandler):
             acdreamURL = 'http://acm.uestc.edu.cn/user/userCenterData/%s' %mainName
             response = yield tornado.gen.Task(client.fetch,acdreamURL,headers=query.headers)
             if response.code == 200:
-                query.getAsyncUestc(response.body)
+                res = query.getAsyncUestc(response.body)
+                otherInfo = ''
+                oj = 0
+                submit = 0
+                print res
+                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
 
             acdreamURL = 'http://acdream.info/user/%s' % mainName
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
-                query.getAsyncACdream(response.body)
+                res = query.getAsyncACdream(response.body)
+                print res
+                otherInfo = ''
+                ac = 0
+                submit=0
+                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
             # codeforces
@@ -87,6 +111,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
             endItem = (loopTimes+1)*count
             name = mainName
             # loop start
+            ac = 0
+            submit = 0
             while loopFlag:
                 '''
                 use cycle to travel the information
@@ -119,16 +145,18 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         pass
                     # store the submit number
                     query.submitNum[oj] += len(data[u'result'])
-
+                    submit += len(data[u'result'])
                     for i in data[u'result']:
                         # only accept AC problem
                         if i[u'verdict'] == 'OK':
                             problemInfo = i[u'problem']
                             problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
                             query.acArchive[oj].add(problemText)
+                            ac += 1
                 else:
                     break
-
+            otherInfo = ''
+            self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             # vjudge async part
             VJheaders = {
                 'Host': 'vjudge.net',
@@ -159,6 +187,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
             maxId = ''
             pageSize=100
             status=''
+            ac = 0
+            submit = 0
             while loopFlag:
                 website = 'http://vjudge.net/user/submissions?username=%s&pageSize=%s&status=%s&maxId=%s' % (name, pageSize, status, maxId)
                 req = tornado.httpclient.HTTPRequest(website,headers=VJheaders,request_timeout=5)
@@ -184,6 +214,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     oj = ojName.lower()
                     # only extract AC status
                     if result == 'AC':
+                        ac +=1
                         if query.acArchive.has_key(oj) and isinstance(query.acArchive[oj],set):
                             query.acArchive[oj].add(probID)
                             query.acArchive['vjudge'].add(probID)
@@ -201,10 +232,12 @@ class queryInfoHandler(tornado.web.RequestHandler):
 
                     # vjudge's submit is not added to total number
                     query.submitNum['vjudge']+=1
+                    submit +=1
                 maxId = dataList[-1][0]
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
-
+        otherInfo = ''
+        self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
         # auth viceName
         if viceName and self.isNameValid(viceName):
             query.changeCurrentName(viceName)
@@ -222,7 +255,9 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 req = tornado.httpclient.HTTPRequest(url, headers=query.headers, request_timeout=5)
                 response = yield tornado.gen.Task(client.fetch, req)
                 if response.code == 200:
-                    query.actRegexRules(response.body, acRegex, submitRegex, oj)
+                    oj,ac,submit = query.actRegexRules(response.body, acRegex, submitRegex, oj)
+                    otherInfo = ''
+                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
                 else:
                     pass
 
@@ -230,14 +265,16 @@ class queryInfoHandler(tornado.web.RequestHandler):
             acdreamURL = 'http://acm.uestc.edu.cn/user/userCenterData/%s' % viceName
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
-                query.getAsyncUestc(response.body)
+                oj,ac,submit = query.getAsyncUestc(response.body)
+                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
 
             acdreamURL = 'http://acdream.info/user/%s' % viceName
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
-                query.getAsyncACdream(response.body)
+                oj,ac,submit=query.getAsyncACdream(response.body)
+                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
             # codeforces
@@ -248,6 +285,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
             startItem = 1+loopTimes*count
             endItem = (loopTimes+1)*count
             name = mainName
+            ac = 0
+            submit = 0
             # loop start
             while loopFlag:
                 '''
@@ -281,6 +320,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         pass
                     # store the submit number
                     query.submitNum[oj] += len(data[u'result'])
+                    submit +=len(data[u'result'])
 
                     for i in data[u'result']:
                         # only accept AC problem
@@ -288,8 +328,10 @@ class queryInfoHandler(tornado.web.RequestHandler):
                             problemInfo = i[u'problem']
                             problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
                             query.acArchive[oj].add(problemText)
+                            ac +=1
                 else:
                     break
+            self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
 
             # vjudge async part
 
@@ -298,6 +340,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
             maxId = ''
             pageSize=100
             status=''
+            ac = 0
+            submit = 0
             while loopFlag:
                 website = 'http://vjudge.net/user/submissions?username=%s&pageSize=%s&status=%s&maxId=%s' % (name, pageSize, status, maxId)
                 req = tornado.httpclient.HTTPRequest(website,headers=VJheaders,request_timeout=5)
@@ -323,9 +367,11 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     oj = ojName.lower()
                     # only extract AC status
                     if result == 'AC':
+                        ac += 1
                         if query.acArchive.has_key(oj):
                             query.acArchive[oj].add(probID)
                             query.acArchive['vjudge'].add('%s%s' %oj, probID)
+
                         else:
                             # initialize the dict, insert value set
                             query.acArchive[oj] = set([])
@@ -340,9 +386,11 @@ class queryInfoHandler(tornado.web.RequestHandler):
 
                     # vjudge's submit is not added to total number
                     query.submitNum['vjudge']+=1
+                    submit+=1
                 maxId = dataList[-1][0]
         else:
             pass
+        self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
 
 
         # prepare the json
@@ -378,8 +426,36 @@ class queryInfoHandler(tornado.web.RequestHandler):
         import re
         return re.match(r'^\w*$', queryName)
 
+    def sendRealTimeInfo(self,oj,name,ac,submit,otherInfo):
+        # revInfo is for authenticate
+        revInfo ={
+            'mainName',self.mainName,
+            'viceName',self.viceName,
+            'revKey',self.revKey,
+            'queryTime',self.timestamp
+
+        }
+        # infoDict is for rendering
+        import time
+        queryTime = time.time()
+        infoDict = {
+            'oj':oj,
+            'ac':ac,
+            'submit':submit,
+            'name':name,
+            'extra':otherInfo,
+            'queryTime':queryTime,
+        }
+        try:
+            echoProblemHandler.sendInfo(revInfo,infoDict)
+            return  True
+        except:
+            logging.error('Sending websocket is fail')
+            return False
+
+
 class echoProblemHandler(tornado.websocket.WebSocketHandler):
-    clients = set([])
+    clients = []
     '''
     client is a dict that contains:
     mainName:''
@@ -409,27 +485,25 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
         :return:
         '''
 
-        msgDict = {}
+        msgDict={}
         # 0 : connect start
         # 1 : right ,give answer
         # 2 : wrong , give reason
         # 3 : shutdown websocket
         try:
-            msgDict['result'] = 0
+            msgDict = {'result': 0, 'responseText': 'Websocket成功连接', 'responseTime': ''}
             # response Text
-            msgDict['response-Text'] = 'Websocket成功连接'
-            msgDict['response-Time'] = ''
             self.write_message(json.dumps(msgDict))
+
             userInfo = json.loads(message)
+            print userInfo
             # now record this info
-            infoDict = {}
-            infoDict['mainName'] = userInfo['mainName']
-            infoDict['viceName'] = userInfo['viceName']
-            infoDict['queryTime'] = userInfo['queryTime']
-            infoDict['revKey'] = userInfo['revKey']
-            infoDict['echoHandler'] = self
-            self.clients.add(infoDict)
-        except:
+            infoDict = {'mainName': userInfo['mainName'], 'viceName': userInfo['viceName'],
+                        'queryTime': userInfo['queryTime'], 'revKey': userInfo['revKey'], 'echoHandler': self}
+            self.clients.append(infoDict)
+        except Exception as e:
+            print e
+            msgDict = {}
             msgDict['result'] = 2
             # response Text
             msgDict['response-Text'] = 'Websocket连接失败'
@@ -438,17 +512,14 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
 
 
     def on_close(self):
-        msgDict = {}
+        msgDict = {'result': 3, 'response-Text': 'GoodBye~', 'response-Time': ''}
         # 0 : connect start
         # 1 : right ,give answer
         # 2 : wrong , give reason
         # 3 : shutdown websocket
-        msgDict['result'] = 3
         # response Text
-        msgDict['response-Text'] = 'GoodBye~'
-        msgDict['response-Time'] = ''
         self.write_message(json.dumps(msgDict))
-        echoProblemHandler.clients.remove(self)
+        #echoProblemHandler.clients.remove(self)
 
     @classmethod
     def update_cache(cls, chat):

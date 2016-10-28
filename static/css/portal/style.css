@@ -186,6 +186,8 @@ pre {
     background: -webkit-linear-gradient(to left, #cb2d3e , #ef473a); /* Chrome 10-25, Safari 5.1-6 */
     background: linear-gradient(to left, #cb2d3e , #ef473a); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
     transition-duration: 0.5s;
+    transition-property: background;
+    transition-timing-function: ease-in;
 }
 
 .fullscreen .more-feature:hover{
@@ -195,6 +197,10 @@ pre {
 
 .more-feature *{
     color: #FFFFFF;
+}
+
+.more-feature .title{
+    color: #FFFFFF !important;
 }
 
 .fullscreen .antiCheat-feature {
@@ -319,7 +325,7 @@ pre {
     animation-duration: 1s;
     -webkit-animation-name: zoomInDown;
     animation-name: zoomInDown;*/
-    /*animation:1s zoomInDown 1 forwards;*/
+
 }
 
 .achieve .item:hover .title{

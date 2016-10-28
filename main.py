@@ -43,6 +43,7 @@ if __name__ == "__main__":
             (r"^/configure/",'configure.view.configureHandler'),
             (r"^/query/",'acmCralwer.view.queryIndexHandler'),
             (r"^/query/api/",'acmCralwer.view.queryInfoHandler'),
+            (r"^/query/realtime/",'acmCralwer.view.echoProblemHandler'),
         ],
         ui_modules={
             'getSetting':uimodule.settingOptionModule,
