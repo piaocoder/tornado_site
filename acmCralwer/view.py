@@ -475,6 +475,10 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
     '''
     cache = []
     cache_size = 200
+
+    def check_origin(self, origin):
+        return True
+
     def open(self, *args, **kwargs):
         msgDict = {}
         # 0 : connect start

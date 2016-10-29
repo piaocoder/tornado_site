@@ -146,7 +146,13 @@
 
     function getRealTimeInfo(mainName,viceName){
         var domain = document.domain;
-        var websocketURL = 'ws://'+domain+':8000/query/realtime/';
+        if (domain== 'localhost' || domain == '127.0.0.1'){
+            port=8000;
+        }
+        else{
+            port=80;
+        }
+        var websocketURL = 'ws://'+domain+':'+port+'/query/realtime/';
         if(window.WebSocket != undefined) {
 	        var connection = new WebSocket(websocketURL);
         }
