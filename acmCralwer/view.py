@@ -71,10 +71,9 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 if response.code == 200:
                     res = query.actRegexRules(response.body,acRegex,submitRegex,oj)
                     otherInfo = ''
-                    ac = 0
-                    submit=0
 
-                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+                    for oj,ac,submit in res:
+                        self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
                 else:
                     pass
 
@@ -84,10 +83,8 @@ class queryInfoHandler(tornado.web.RequestHandler):
             if response.code == 200:
                 res = query.getAsyncUestc(response.body)
                 otherInfo = ''
-                oj = 0
-                submit = 0
-                print res
-                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+                for oj,ac,submit in res:
+                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
 
@@ -95,11 +92,10 @@ class queryInfoHandler(tornado.web.RequestHandler):
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
                 res = query.getAsyncACdream(response.body)
-                print res
                 otherInfo = ''
-                ac = 0
-                submit=0
-                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+                for oj,ac,submit in res:
+                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+
             else:
                 pass
             # codeforces
@@ -158,6 +154,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
             otherInfo = ''
             self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             # vjudge async part
+            query.acArchive['vjudge'] = set([])
             VJheaders = {
                 'Host': 'vjudge.net',
                 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
@@ -217,11 +214,21 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         ac +=1
                         if query.acArchive.has_key(oj) and isinstance(query.acArchive[oj],set):
                             query.acArchive[oj].add(probID)
-                            query.acArchive['vjudge'].add(probID)
+                            try:
+                                query.acArchive['vjudge'].add(probID)
+                            except:
+                                try:
+                                    query.acArchive['vjudge'] = set(query.acArchive['vjudge'])
+                                    query.acArchive['vjudge'].add(probID)
+                                except:
+                                    pass
+                                print query.acArchive['vjudge'],probID
+                                pass
                         else:
                             # initialize the dict, insert value set
                             query.acArchive[oj] = set([])
                             query.acArchive[oj].add(probID)
+                            query.acArchive['vjudge'].add(probID)
                     else:
                         pass
                     if query.submitNum.has_key(oj):
@@ -237,6 +244,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
         else:
             raise tornado.web.HTTPError(500,log_message='Invalid name')
         otherInfo = ''
+        oj = 'vjudge'
         self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
         # auth viceName
         if viceName and self.isNameValid(viceName):
@@ -255,9 +263,10 @@ class queryInfoHandler(tornado.web.RequestHandler):
                 req = tornado.httpclient.HTTPRequest(url, headers=query.headers, request_timeout=5)
                 response = yield tornado.gen.Task(client.fetch, req)
                 if response.code == 200:
-                    oj,ac,submit = query.actRegexRules(response.body, acRegex, submitRegex, oj)
+                    res = query.actRegexRules(response.body, acRegex, submitRegex, oj)
                     otherInfo = ''
-                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+                    for oj,ac,submit in res:
+                        self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
                 else:
                     pass
 
@@ -265,8 +274,9 @@ class queryInfoHandler(tornado.web.RequestHandler):
             acdreamURL = 'http://acm.uestc.edu.cn/user/userCenterData/%s' % viceName
             response = yield tornado.gen.Task(client.fetch, acdreamURL, headers=query.headers)
             if response.code == 200:
-                oj,ac,submit = query.getAsyncUestc(response.body)
-                self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+                res = query.getAsyncUestc(response.body)
+                for oj,ac,submit in res:
+                    self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             else:
                 pass
 
@@ -388,9 +398,10 @@ class queryInfoHandler(tornado.web.RequestHandler):
                     query.submitNum['vjudge']+=1
                     submit+=1
                 maxId = dataList[-1][0]
+            self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
         else:
             pass
-        self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
+
 
 
         # prepare the json
@@ -429,10 +440,10 @@ class queryInfoHandler(tornado.web.RequestHandler):
     def sendRealTimeInfo(self,oj,name,ac,submit,otherInfo):
         # revInfo is for authenticate
         revInfo ={
-            'mainName',self.mainName,
-            'viceName',self.viceName,
-            'revKey',self.revKey,
-            'queryTime',self.timestamp
+            'mainName':self.mainName,
+            'viceName':self.viceName,
+            'revKey':self.revKey,
+            'queryTime':self.timestamp
 
         }
         # infoDict is for rendering
@@ -449,7 +460,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
         try:
             echoProblemHandler.sendInfo(revInfo,infoDict)
             return  True
-        except:
+        except Exception as e:
             logging.error('Sending websocket is fail')
             return False
 
@@ -496,7 +507,6 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
             self.write_message(json.dumps(msgDict))
 
             userInfo = json.loads(message)
-            print userInfo
             # now record this info
             infoDict = {'mainName': userInfo['mainName'], 'viceName': userInfo['viceName'],
                         'queryTime': userInfo['queryTime'], 'revKey': userInfo['revKey'], 'echoHandler': self}
@@ -512,14 +522,18 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
 
 
     def on_close(self):
-        msgDict = {'result': 3, 'response-Text': 'GoodBye~', 'response-Time': ''}
+        #msgDict = {'result': 3, 'response-Text': 'GoodBye~', 'response-Time': ''}
         # 0 : connect start
         # 1 : right ,give answer
         # 2 : wrong , give reason
         # 3 : shutdown websocket
         # response Text
-        self.write_message(json.dumps(msgDict))
-        #echoProblemHandler.clients.remove(self)
+        #self.write_message(json.dumps(msgDict))
+        for client in self.clients:
+            if client['echoHandler'] == self:
+                self.clients.remove(client)
+            else:
+                pass
 
     @classmethod
     def update_cache(cls, chat):
@@ -534,8 +548,8 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
             for client in cls.clients:
                 if client['mainName'] == revInfo['mainName'] \
                 and client['viceName'] == revInfo['viceName'] \
-                and client['queryTime'] == revInfo['queryTime'] \
-                and client['revKey'] == revInfo['revKey']:
+                and str(client['queryTime']) == str(revInfo['queryTime']) \
+                and str(client['revKey']) == str(revInfo['revKey']):
                     # send client and json
                     client['echoHandler'].write_message(json.dumps(infoDict))
         else:

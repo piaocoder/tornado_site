@@ -67,7 +67,7 @@ class crawler:
             yield oj, len(set(acProblem)), submission[0]
         except:
             self.wrongOJ[oj].append(self.name)
-            yield 0,0,0
+            yield oj,0,0
         # for AC merge all the information
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
 
@@ -186,12 +186,12 @@ class crawler:
         try:
             acProblem = re.findall(r'<a class="pid" href="/problem\?pid=[0-9]*?">([0-9]*?)</a>', linkAddress[0], re.S)
             self.submitNum[oj] += int(submission[0])
+            self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
+            yield oj, len(acProblem),submission[0]
         except:
             self.wrongOJ[oj].append(name)
-            return 0,0,0
-            #return 0
-        self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
-        return oj, len(acProblem),submission[0]
+            yield oj,0,0
+
 
 
     def showsgu(self, queryName=''):
@@ -571,7 +571,7 @@ class crawler:
         # detect AC item
         if dataDict['result'] == 'error':
             self.wrongOJ[oj].append(name)
-            yield 0,0,0
+            yield oj,0,0
         else:
             ac = 0
             for dictItem in dataDict['problemStatus']:
