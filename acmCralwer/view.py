@@ -485,6 +485,10 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
         # 1 : right ,give answer
         # 2 : wrong , give reason
         # 3 : shutdown websocket
+        if len(self.clients)>self.cache_size:
+            echoProblemHandler.update_cache()
+        else:
+            pass
         msgDict['result'] = 0
         # response Text
         msgDict['response-Text'] = 'Websocket成功连接'
@@ -540,8 +544,8 @@ class echoProblemHandler(tornado.websocket.WebSocketHandler):
                 pass
 
     @classmethod
-    def update_cache(cls, chat):
-        cls.cache.append(chat)
+    def update_cache(cls):
+        # cls.cache.append(chat)
         if len(cls.cache) > cls.cache_size:
             cls.cache = cls.cache[-cls.cache_size:]
 
