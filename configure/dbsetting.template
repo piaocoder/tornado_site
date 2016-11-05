@@ -1,0 +1,22 @@
+# -*- coding: UTF-8 -*-
+# this file try to demostrate the sqlachemy's configuration
+# do not change it!
+# if you want to change it , please go to setting-sample
+
+# host for database
+db_host = '{{ db_host }}'
+
+# username for database
+db_user = '{{ db_user }}'
+
+# password for database
+db_passwd = '{{ db_passwd }}'
+
+# database's type
+db_type = '{{ db_type }}'
+
+# driver for SQLalchemy
+db_driver = '{{ db_driver }}'
+
+# which database we should choose
+db_name = '{{ db_name }}'

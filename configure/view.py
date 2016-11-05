@@ -16,6 +16,7 @@ class configureHandler(tornado.web.RequestHandler):
         conf = configure.config()
         conf.runTest()
         if conf.configExist and conf.databaseConnect :
+            # if configure successfully just return false
             raise tornado.web.HTTPError(403)
         else:
             pass
@@ -24,13 +25,14 @@ class configureHandler(tornado.web.RequestHandler):
         databasePassword = self.get_argument('databasePassword')
         databaseHost = self.get_argument('databaseHost')
         databaseName = self.get_argument('databaseName')
-        conf = configure.config()
-        ver = conf.testDatabaseConnect(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
-        print ver
-        if ver:
-            conf.saveConfFiles(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
+        databaseDriver = self.get_argument('databaseDriver')
+
+        flag = configure.config.checkDatabaseConnect(databaseType,databaseDriver,databaseUser,databasePassword,databaseHost,databaseName)
+        if flag:
+            # it can used!
+            conf.saveConfFiles(databaseType,databaseDriver,databaseUser,databasePassword,databaseHost,databaseName)
             # finished...
-            self.render('configure/result.html',ver=ver)
+            self.render('configure/result.html',)
         else:
             self.render('configure/changeConf.html',error=True)
 

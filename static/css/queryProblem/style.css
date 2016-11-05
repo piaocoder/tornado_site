@@ -2,6 +2,21 @@
 @import url('https://fonts.googleapis.com/css?family=Audiowide');
 @import url('https://fonts.googleapis.com/css?family=Exo+2');
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+a,
+code,
+span,
+body,
+html {
+    font-family: 'Roboto',"Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+}
+
 *{
     font-family: 'Roboto',"Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
 }
@@ -381,7 +396,39 @@ pre {
     color :#f9f2f4;
 }
 
+.transparent-table tbody tr:nth-child(odd),
+.transparent-table tbody tr:nth-child(even) {
+    background-color: transparent;
+}
+
+.transparent-table a{
+    color: #f9f2f4;
+    transition-property: color;
+    transition-duration: 0.4s;
+}
+
+.transparent-table a:hover,
+.transparent-table a:focus,
+.transparent-table a:visited{
+    color: #fffff9;
+}
+
 table {
     border:#fffff9 0.12rem solid;
 }
 
+.result-screen {
+    max-width: none;
+    background: #02AAB0; /* fallback for old browsers */
+    background: -webkit-linear-gradient(to left, #02AAB0, #00CDAC); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to left, #02AAB0, #00CDAC); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.result-screen label{
+    color: #f9f2f4;
+}
+
+.result-screen .result-table {
+    padding: 3rem 2rem 3rem 2rem;
+    border-radius: 1.5rem;
+}

@@ -27,8 +27,6 @@ class config:
         try:
             import ConfigParser
             import sqlalchemy
-            import MySQLdb
-            import sqlite3
         except ImportError:
             logging.critical('We can not find the package')
             raise ImportError
@@ -39,19 +37,9 @@ class config:
         configuration file is .ini which Python support initially
         :return: Boolean value check the information
         '''
-        try:
-            import os
-        except ImportError:
-            logging.critical('We can not find the package')
-            raise ImportError
-        except Exception as e:
-            errorInfo='''Woo we do not know what happened exactly.
-            please tell me at github , thanks.
-            '''
-            logging.critical(errorInfo)
-            raise e
-        # check whether config file exist.
-        configFilePath = os.path.join(os.path.dirname(__file__), "config.ini")
+        import os
+        # check whether database file exist.
+        configFilePath = os.path.join(os.path.dirname(__file__), "dbsetting.py")
         if os.path.isfile(configFilePath):
             self.configExist = True
             self.configFilePath = configFilePath
@@ -59,40 +47,55 @@ class config:
             infoString = 'Configuration file does not exist or set incorrect ,you will specify the options manually.'
             logging.warning(infoString)
             self.configExist=False
-            self.configFilePath  =None
+            self.configFilePath =None
+    @staticmethod
+    def checkDatabaseConnect(databaseType, databaseDriver, databaseUser,databasePassword,databaseHost,databaseName):
+        try:
+            from sqlalchemy import create_engine
+            # according to sqlalchemy we should form that address
+            # dialect[+driver]://user:password@host/dbname
+            if databaseDriver == '':
+                # use default driver
+                sqlAddress = '%s://%s:%s@%s/%s'%(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
+            else:
+                sqlAddress = '%s+%s://%s:%s@%s/%s'%(databaseType,databaseDriver,databaseUser,databasePassword,databaseHost,databaseName)
+            print sqlAddress
+            engine = create_engine(sqlAddress, echo=True)
+            engine.connect()
+            engine.dispose()
+            return True
+        except Exception as e:
+
+            return False
 
     def checkDatabase(self):
         # default : MySQL
+        self.checkConfFile()
         if self.configExist:
-            import ConfigParser
             import sqlalchemy
-            configParser = ConfigParser.ConfigParser()
-            configParser.read(self.configFilePath)
             try:
-                databaseType = configParser.get('database','type')
-                databaseUser = configParser.get('database','user')
-                databasePassword = configParser.get('database','password')
-                databaseHost = configParser.get('database','host')
+                import dbsetting
+                databaseType = dbsetting.db_type
+                databaseUser = dbsetting.db_user
+                databasePassword = dbsetting.db_passwd
+                databaseHost = dbsetting.db_host
                 #databasePort = configParser.get('database','port')
-                databaseName = configParser.get('database','name')
+                databaseName = dbsetting.db_name
+                databaseDriver = dbsetting.db_driver
                 self.databaseConnect = True
-                if databaseType == 'MySQL':
-                    import MySQLdb
-                    con = MySQLdb.connect(databaseHost,databaseUser,databasePassword,databaseName)
-                    cur = con.cursor()
-                    cur.execute("SELECT VERSION()")
-                    data = cur.fetchone()
-                    logging.info("Database version : %s " % data[0])
-                    con.close()
-                elif databaseType == 'SQLite':
-                    import sqlite3
-                    import os
-                    sqliteParentDir =os.path.abspath(os.path.join(os.path.dirname('main.py'),os.path.pardir))
-                    sqliteFilePath = os.path.join(sqliteParentDir,'%s.db') %(databaseName)
-                    conn = sqlite3.connect(sqliteFilePath)
-                    conn.close()
-                else:
-                    logging.critical('we do not support your database,our supported database type is:MySQL,SQLite(match case)')
+                try:
+                    from sqlalchemy import create_engine
+                    # according to sqlalchemy we should form that address
+                    # dialect[+driver]://user:password@host/dbname
+                    if databaseDriver == '':
+                        # use default driver
+                        sqlAddress = '%s://%s:%s@%s/%s'%(databaseType,databaseUser,databasePassword,databaseHost,databaseName)
+                    else:
+                        sqlAddress = '%s+%s://%s:%s@%s/%s'%(databaseType,databaseDriver,databaseUser,databasePassword,databaseHost,databaseName)
+                    engine = create_engine(sqlAddress, echo=True)
+                    self.databaseConnect = True
+                except Exception as e:
+                    logging.critical(e)
                     self.databaseConnect = False
 
 
@@ -109,61 +112,19 @@ class config:
         self.checkDatabase()
 
     #set up a new ini file
-    def saveConfFiles(self,type,user,password,host,name):
+    def saveConfFiles(self, dbtype, driver, user,password,host,name):
         import ConfigParser
-        configFilePath = os.path.join(os.path.dirname(__file__), "config.ini")
-        cf = ConfigParser.ConfigParser()
-        # add database section
-        cf.add_section('database')
-        cf.set('database','type',type)
-        cf.set('database','user',user)
-        cf.set('database','password',password)
-        cf.set('database','host',host)
-        cf.set('database','name',name)
-        cf.write(open(configFilePath, "w"))
+        from tornado.template import Template
+        # extract string from template and form string
+        configTemplatePath = os.path.join(os.path.dirname(__file__), "dbsetting.template")
+        with open(configTemplatePath,'r') as templateFile:
+            t = Template(templateFile.read())
+            configContent = t.generate(db_host=host,db_user=user,db_passwd=password,db_type=dbtype,db_driver=driver,db_name=name)
+        # write to dbsetting
+        configFilePath = os.path.join(os.path.dirname(__file__), "dbsetting.py")
+        with open(configFilePath,'w') as pyFile:
+            pyFile.write(configContent)
         return True
-
-    def testDatabaseConnect(self,type,user,password,host,name):
-        # default : MySQL
-        if 1:
-            import ConfigParser
-            import sqlalchemy
-            configParser = ConfigParser.ConfigParser()
-            try:
-                databaseType = type
-                databaseUser = user
-                databasePassword = password
-                databaseHost = host
-                databaseName = name
-                if databaseType == 'MySQL':
-                    import MySQLdb
-                    con = MySQLdb.connect(databaseHost,databaseUser,databasePassword,databaseName)
-                    cur = con.cursor()
-                    cur.execute("SELECT VERSION()")
-                    verData = cur.fetchone()
-                    print verData
-                    #logging.info("Database version : %s ") % verData[0]
-                    con.close()
-                    return verData[0]
-                elif databaseType == 'SQLite':
-                    import sqlite3
-                    import os
-                    sqliteParentDir =os.path.abspath(os.path.join(os.path.dirname('main.py'),os.path.pardir))
-                    sqliteFilePath = os.path.join(sqliteParentDir,'%s.db') %(databaseName)
-                    conn = sqlite3.connect(sqliteFilePath)
-                    conn.close()
-                    verData = 'sqlite'
-                    return verData
-                else:
-                    logging.critical('we do not support your database,our supported database type is:MySQL,SQLite(match case)')
-                    return False
-
-
-            except Exception as e:
-                logging.critical(e)
-                return False
-        else:
-            pass
 
 
 

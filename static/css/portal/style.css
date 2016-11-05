@@ -2,7 +2,18 @@
 @import url('https://fonts.googleapis.com/css?family=Audiowide');
 @import url('https://fonts.googleapis.com/css?family=Exo+2');
 
-*{
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+a,
+code,
+span,
+body,
+html {
     font-family: 'Roboto',"Ubuntu", "微软雅黑", "Source Sans Pro", "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
 }
 

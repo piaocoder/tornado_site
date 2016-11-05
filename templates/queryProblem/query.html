@@ -25,8 +25,8 @@
                         <th>被查询者</th>
                         <th>已经获得的AC量</th>
                         <th>已经获得的提交量</th>
-                        <th> 查询时间 </th>
-                        <th>其他信息</th>
+                        <th>查询时间 </th>
+                        <th>查询时长（秒）</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,8 +39,8 @@
     </div>
     <div class="row result-screen" id="result-screen" style="">
         <!-- this is result page and not shown until the query finished -->
-        <div class="medium-8 medium-offset-2 table-scroll">
-            <table id="result-table" >
+        <div class="medium-8 medium-offset-2 table-scroll result-table" >
+            <table id="result-table" class="transparent-table" >
                 <thead>
                     <tr>
                         <th> # </th>
@@ -73,13 +73,108 @@
     var globalData = false;
     var dateTime = new Date().getTime();
     var revKey = Math.random().toString();
-    function queryInfo(mainName,viceName){
+    // set for remain task
+    var remainTask = 0;
+
+    function MergeArray(arr1,arr2){
+        var _arr = new Array();
+        for(var i=0;i<arr1.length;i++){
+            _arr.push(arr1[i]);
+        }
+        for(var i=0;i<arr2.length;i++){
+            var flag = true;
+            for(var j=0;j<arr1.length;j++){
+                if(arr2[i]==arr1[j]){
+                    flag=false;
+                    break;
+                }
+            }
+            if(flag){
+                _arr.push(arr2[i]);
+            }
+        }
+        return _arr;
+    }
+
+    function appendData(data){
+        if (globalData){
+            // first time just pass variable
+            globalData = data;
+        }
+        else{
+            // this is for merge data
+            // for local one
+            for (var item in data['ac']){
+                globalData['ac'][item] = MergeArray(globalData['ac'][item],data['ac'][item]);
+                globalData['submit'][item] += data['submit'][item];
+            }
+            for (var item in data['wrongOJ']){
+                globalData['wrongOJ'][item] = MergeArray(globalData['wrongOJ'][item],data['wrongOJ'][item]);
+            }
+        }
+
+    }
+
+    function renderData(){
+        if (globalData && remainTask <= 0 ){
+            // make sure global data exist and have finished all the task
+            var tableData = [];
+            var cnt=0;
+            var totAC=0;
+            var totSubmit = 0;
+            for (var item in globalData['ac']){
+                cnt+=1;
+                if (item != 'vjudge'){
+                    totAC+=globalData['ac'][item].length;
+                    totSubmit+=globalData['submit'][item];
+                }
+                var ojInfo = [
+                    cnt,
+                    item.toUpperCase(),
+                    globalData['ac'][item].length,
+                    globalData['submit'][item],
+                    '<a href="javascript:getDetail(\'' + item +'\')">点击获得'+item.toUpperCase()+'的情况</a>'
+                ];
+                //console.log(ojInfo);
+                tableData.push(ojInfo);
+            }
+            var totInfo = [
+                cnt+1,
+                '合计',
+                totAC,
+                totSubmit,
+                ''
+            ];
+            tableData.push(totInfo);
+            $('#result-table').DataTable({
+                data:tableData,
+                buttons: [
+                    'copy', 'excel', 'pdf'
+                ]
+            });
+        }
+        else{
+            console.log(globalData);
+            console.log(remainTask);
+            alert('数据并未准备就绪...');
+        }
+    }
+
+    function queryInfo(mainName){
+        if (mainName.length == 0){
+            // if null just return null
+            console.log(mainName);
+            return false;
+        }
+        else{
+            remainTask +=1;
+        }
         xhr = $.ajax({
             url:"/query/api/",
             // data which api server can accept
             data:{
                 mainName:mainName,
-                viceName:viceName,
+                viceName:'',
                 timestamp: dateTime,
                 revKey:revKey
             },
@@ -87,51 +182,25 @@
             type:"GET",
             cache: false,
             success: function (data) {
+                // remove task from queue
+                remainTask -= 1
                 //$('#realtime-screen').hide();
                 $('#result-screen').slideDown("slow");
                 globalData = data;
-                var tableData = [];
-                var cnt=0;
-                var totAC=0;
-                var totSubmit = 0;
-                console.log(data['submit']);
-                for (var item in data['ac']){
-                    cnt+=1;
-                    if (item != 'vjudge'){
-                        totAC+=data['ac'][item].length;
-                        totSubmit+=data['submit'][item];
-                    }
-                    var ojInfo = [
-                            cnt,
-                            item.toUpperCase(),
-                            data['ac'][item].length,
-                            data['submit'][item],
-                            '<a href="javascript:getDetail(\'' + item.toUpperCase()+'\')">点击获得'+item+'的情况</a>'
-                    ];
-                    //console.log(ojInfo);
-                    tableData.push(ojInfo);
-                }
-                var totInfo = [
-                        cnt+1,
-                        '合计',
-                        totAC,
-                        totSubmit,
-                        ''
-                ];
-                tableData.push(totInfo);
-                $('#result-table').DataTable({
-                    data:tableData,
-                    buttons: [
-                        'copy', 'excel', 'pdf'
-                    ]
-                });
+                // merge global data and fetched data
+                appendData(data);
+                renderData();
                 console.log(data);
+
             },
             error:function (xhr, ajaxOptions, thrownError){
+                remainTask -=1;
                 console.error(xhr.status);
                 console.error(thrownError);
                 alert('抱歉，数据出错...');
+
             }
+
 
         });
 
@@ -139,12 +208,14 @@
     }
 
     function getDetail(oj){
+
         $('#modal #oj-name').text(oj.toUpperCase());
-        $('#modal #ac-problem').text(globalData['ac'][oj].join());
+        oj = oj.toLowerCase();
+        $('#modal #ac-problem').text(window.globalData['ac'][oj]);
         $('#modal').foundation('open');
     }
 
-    function getRealTimeInfo(mainName,viceName){
+    function getRealTimeInfo(mainName){
         var domain = document.domain;
         if (domain== 'localhost' || domain == '127.0.0.1'){
             port=8000;
@@ -157,7 +228,7 @@
 	        var connection = new WebSocket(websocketURL);
         }
         else{
-            alert('你的浏览器不支持websocket技术吗？')
+            alert('你的浏览器不支持websocket技术吗？');
             return false;
         }
         var ws = new WebSocket(websocketURL);
@@ -211,8 +282,8 @@
             $('#realtime-screen').slideDown("slow");
             $('#result-screen').slideUp("slow");
             var infoDict = {
-                mainName:'{{ mainName }}',
-                viceName:'{{ viceName }}',
+                mainName: mainName,
+                viceName:'',
                 queryTime:dateTime,
                 // gennerate key for unique...
                 revKey:revKey
@@ -225,9 +296,12 @@
     }
 
     $(document).ready(function () {
-        queryInfo('{{ mainName }}','{{ viceName }}');
-        var ws = getRealTimeInfo('{{ mainName }}','{{ viceName }}');
+        var ws = getRealTimeInfo('{{ mainName }}');
+        var viceWS = getRealTimeInfo('{{ viceName }}');
         // send init information
+        queryInfo('{{ mainName }}');
+        queryInfo('{{ viceName }}');
+
 
     });
 </script>

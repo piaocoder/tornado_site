@@ -18,9 +18,9 @@
                     <!-- content -->
                     <div class="tabs-content" data-tabs-content="example-tabs">
                         <div class="tabs-panel is-active table-scroll" id="panel1">
-                            <p>你可以直接增加或者修改位于<code>configure</code>文件夹下的ini文件.</p>
-                            <p>我们使用的是<code>ini</code>配置文件</p>
-                            <p>请使用database作为section名字来指示数据库的连接，在这个section下，您需要配置：</p>
+                            <p>你可以直接增加或者修改位于<code>configure</code>文件夹下的py文件.</p>
+                            <p>我们使用的是<code>py</code>配置文件</p>
+                            <p>我们需要您提供下面的信息：</p>
                             <table>
                                 <thead>
                                     <tr>
@@ -32,40 +32,63 @@
                                 <!-- body -->
                                 <tbody>
                                     <tr>
-                                        <td>type</td>
+                                        <td>db_type</td>
                                         <td>数据库类型</td>
-                                        <td>暂时只支持MySQL和SQLite</td>
+                                        <td>请您查看SQLAlchemy支持的数据库类型</td>
                                     </tr>
                                     <tr>
-                                        <td>user</td>
+                                        <td>db_driver</td>
+                                        <td>数据库驱动</td>
+                                        <td>若您留空，则代表您选择SQLAlchemy默认的驱动</td>
+                                    </tr>
+                                    <tr>
+                                        <td>db_user</td>
                                         <td>数据库用户</td>
                                         <td>请尽可能选用具有最小的privileges的用户来访问这个数据库</td>
                                     </tr>
                                     <tr>
-                                        <td>password</td>
+                                        <td>db_passwd</td>
                                         <td>数据库密码</td>
                                         <td>SQLite请留空</td>
                                     </tr>
                                     <tr>
-                                        <td>host</td>
+                                        <td>db_host</td>
                                         <td>数据库地址</td>
                                         <td>本地可选择localhost</td>
                                     </tr>
                                     <tr>
-                                        <td>name</td>
+                                        <td>db_name</td>
                                         <td>数据库名称</td>
-                                        <td>SQLite不用给上后缀名<code>.db</code></td>
+                                        <td>必填</td>
                                     </tr>
                                 </tbody>
                             </table>
                             <h6>这是我们给的一个实例</h6>
-                            <pre>
-[database]
-type = MySQL
-user = root
-password =
-host = localhost
-name = npupt</pre>
+                            <pre class="python">
+# -*- coding: UTF-8 -*-
+__author__ = 'kidozh'
+# this file try to demostrate the sqlachemy's configuration
+# if you want to configure sqlachemy manually , you will change it and rename dbsetting.py
+
+# host for database
+db_host = ''
+
+
+# username for database
+db_user = 'root'
+
+# password for database
+db_passwd = ''
+
+# database's type
+db_type = 'mysql'
+
+# driver for SQLalchemy
+db_driver = 'mysqldb'
+
+# which database we should choose
+db_name = 'npuacm'</pre>
+                            <p>你需要注意，我们不会主动检查您的数据库配置是否能够连接到数据库，请您配置完成之后重新本地址检查数据库配置情况</p>
 
                         </div>
                         <div class="tabs-panel" id="panel2">
@@ -96,13 +119,19 @@ name = npupt</pre>
                 <div class="row">
                     <div class="columns medium-8 medium-offset-2">
                         <label>数据库类型
-                            <select name="databaseType">
-                                <option name="databaseType" value="MySQL">MySQL</option>
-                                <option name="databaseType" value="SQLite">SQLite</option>
-                            </select>
+                            <input type="text" name="databaseType" placeholder="您可以查询所有SQLalchemy支持的数据库">
                         </label>
-                        <p class="help-text">目前暂时只支持MySQL和SQLite。</p>
+                        <p class="help-text">点击<a href="http://docs.sqlalchemy.org/en/rel_1_1/core/engines.html">这里</a>查看数据库对应的驱动</p>
                     </div>
+                </div>
+                <div class="row">
+                    <div class="columns medium-8 medium-offset-2">
+                        <label>数据库驱动
+                            <input type="text" name="databaseDriver" placeholder="您可以查询所有SQLalchemy支持的驱动">
+                        </label>
+                        <p class="help-text">点击<a href="http://docs.sqlalchemy.org/en/rel_1_1/core/engines.html">这里</a>查看数据库对应的驱动</p>
+                    </div>
+
                 </div>
                 <div class="row">
                     <div class="columns medium-8 medium-offset-2">
