@@ -150,14 +150,19 @@ class queryInfoHandler(tornado.web.RequestHandler):
                         if i[u'verdict'] == 'OK':
                             problemInfo = i[u'problem']
                             problemText ='%s%s' %(problemInfo[u'contestId'],problemInfo[u'index'])
-                            query.acArchive[oj].add(problemText)
+                            if(query.acArchive[oj],list):
+                                query.acArchive[oj].add(problemText)
+                            else:
+                                query.acArchive[oj] = set(query.acArchive[oj]).add(problemText)
                             ac += 1
+                        else:
+                            pass
                 else:
                     break
             otherInfo = time.time()-t0
             self.sendRealTimeInfo(oj,name,ac,submit,otherInfo)
             # vjudge async part
-            query.acArchive['vjudge'] = set([])
+            query.acArchive['vjudge'] = set()
             VJheaders = {
                 'Host': 'vjudge.net',
                 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
@@ -231,7 +236,7 @@ class queryInfoHandler(tornado.web.RequestHandler):
                                 pass
                         else:
                             # initialize the dict, insert value set
-                            query.acArchive[oj] = set([])
+                            query.acArchive[oj] = set()
                             query.acArchive[oj].add('%s %s' %(oj,probID))
                             if isinstance(query.acArchive['vjudge'],list):
                                 query.acArchive['vjudge'] = set(query.acArchive['vjudge'])

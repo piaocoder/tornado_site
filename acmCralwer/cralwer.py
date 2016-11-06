@@ -37,7 +37,7 @@ class crawler:
         for oj in self.supportedOJ:
             # for achive ,use set
             self.submitNum[oj] = 0
-            self.acArchive[oj]=set([])
+            self.acArchive[oj]=set()
             # for problem , use list
             self.wrongOJ[oj]=[]
 
@@ -447,7 +447,7 @@ class crawler:
                         self.acArchive[oj].add(probID)
                     else:
                         # initialize the dict, insert value set
-                        self.acArchive[oj] = set([]).add(probID)
+                        self.acArchive[oj] = set().add(probID)
                 else:
                     pass
                 self.submitNum[oj] += 1
@@ -527,7 +527,7 @@ class crawler:
                         self.acArchive[oj].add(probID)
                     else:
                         # initialize the dict, insert value set
-                        self.acArchive[oj] = set([]).add(probID)
+                        self.acArchive[oj] = set().add(probID)
                 else:
                     pass
                 self.submitNum[oj] += 1

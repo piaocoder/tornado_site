@@ -15,6 +15,21 @@
             <!--<h3 class="text-center">在<a href="https://github.com/kidozh/tornado_site"><span class="fa fa-github"></span></a>上关注我们更多</h3>-->
         </div>
     </div>
+    <div class="row count-screen ">
+        <div class="medium-4 columns">
+            <h5>您需要注意，当网络波动的时候，我们的数据将会不精确，请您留心。</h5>
+        </div>
+        <div class="medium-4 columns">
+            <p class="text-center">查询时长</p>
+            <h1 class="text-center" id="escape-time"></h1>
+        </div>
+        <div class="medium-4 columns">
+            <div class="">
+                <h5 class="text-center">新增一个查询</h5>
+                <p class="text-center"><a class=" text-center" style="font-size: 1.2rem" onclick="javascript:openAddNewModal();">点击这里</a></p>
+            </div>
+        </div>
+    </div>
     <div class="row realtime-screen" id="realtime-screen">
         <h2 class="text-center">实时情况查询</h2>
         <div class="columns medium-10 medium-offset-1 table-scroll">
@@ -58,12 +73,34 @@
         </div>
     </div>
 <!-- reveal -->
-<div class="reveal" id="modal" data-reveal>
+<div class="reveal custom-reveal" id="modal" data-reveal>
     <h1><span id="oj-name"></span>的具体AC题目</h1>
     <p id="ac-problem" style="word-break: break-all;word-wrap: break-word; "></p>
     <button class="close-button" data-close aria-label="Close modal" type="button">
         <span aria-hidden="true">&times;</span>
     </button>
+</div>
+
+
+<!-- reveal -->
+<div class="reveal custom-reveal" id="addNewModal" data-reveal>
+    <div class="row reveal-title" >
+        <div class="medium-10 medium-offset-1">
+            <h1>新增查找</h1>
+        </div>
+    </div>
+    <div class="row reveal-body">
+        <h5 class="text-center">请输入一个账号</h5>
+        <div class="columns medium-8 medium-offset-2">
+            <input class="new-input-user" pattern='^\w*$' placeholder="请输入账号" id="new-input-user">
+        </div>
+        <p id="error-text"></p>
+        <a class="botton text-right pull-right" onclick="javascript:addNewTask();" >新增这个账号</a>
+    </div>
+    <button class="close-button" data-close aria-label="Close modal" type="button">
+        <span aria-hidden="true">&times;</span>
+    </button>
+
 </div>
 
 {% end %}
@@ -73,6 +110,7 @@
     var globalData = false;
     var dateTime = new Date().getTime();
     var revKey = Math.random().toString();
+    var elapseSec = 0;
     // set for remain task
     var remainTask = 0;
 
@@ -97,9 +135,10 @@
     }
 
     function appendData(data){
-        if (globalData){
+        if (globalData == false){
             // first time just pass variable
             globalData = data;
+            console.log('copy array successfully')
         }
         else{
             // this is for merge data
@@ -146,6 +185,18 @@
                 ''
             ];
             tableData.push(totInfo);
+            // try to reinit the table
+            if ( $.fn.dataTable.isDataTable( '#result-table' ) ) {
+                table = $('#result-table').DataTable();
+            }
+            else {
+                table = $('#result-table').DataTable( {
+                    paging: false
+                });
+            }
+            // destroy the table
+            table.destroy();
+            // init table
             $('#result-table').DataTable({
                 data:tableData,
                 buttons: [
@@ -156,7 +207,6 @@
         else{
             console.log(globalData);
             console.log(remainTask);
-            alert('数据并未准备就绪...');
         }
     }
 
@@ -186,7 +236,7 @@
                 remainTask -= 1
                 //$('#realtime-screen').hide();
                 $('#result-screen').slideDown("slow");
-                globalData = data;
+                //globalData = data;
                 // merge global data and fetched data
                 appendData(data);
                 renderData();
@@ -234,7 +284,6 @@
         var ws = new WebSocket(websocketURL);
         // notice callback
         ws.onmessage = function (event) {
-            console.log(event.data);
             realInfo = JSON.parse(event.data);
 
             //select table and add a row
@@ -251,7 +300,6 @@
                 if (realInfo[key] == undefined){
                     break;
                 }
-                console.log(key);
                 var td = tr.insertCell();
 
                 if (key == 'oj'){
@@ -259,7 +307,6 @@
                 }
                 else if(key == 'queryTime'){
                     var date = new Date(parseFloat(realInfo[key])*1000);
-                    console.log(date);
                     td.innerText = date.toLocaleString().replace(/:\d{1,2}$/,' ');
                 }
                 else{
@@ -289,10 +336,50 @@
                 revKey:revKey
             };
             ws.send(JSON.stringify(infoDict));
-            console.log(infoDict);
         };
 
         return ws;
+    }
+
+    function countSec(){
+        elapseSec +=1;
+        var interval =  setInterval(function(){
+            if(remainTask == 0){
+                clearInterval(interval);
+            }
+            else{
+                elapseSec +=1;
+                $('#escape-time').text(elapseSec);
+            }
+        }, 1000);
+    }
+
+    function addTask(name){
+        // get information in advance
+        var newWebsocket = getRealTimeInfo(name);
+        queryInfo(name);
+        countSec();
+    }
+
+    function openAddNewModal(){
+        $('#new-input-user').val('');
+        $('#error-text').text('');
+        $('#addNewModal').foundation('open');
+    }
+
+    function addNewTask(){
+        name =  $('#new-input-user').val();
+        console.log(name);
+        if (name.search(/^\w+$/)!= -1){
+            // find the value
+            addTask(name);
+            $('#addNewModal').foundation('close');
+        }
+        else{
+            $('#error-text').text('您的输入并不符合要求，请重试。')
+        }
+
+
     }
 
     $(document).ready(function () {
@@ -301,7 +388,7 @@
         // send init information
         queryInfo('{{ mainName }}');
         queryInfo('{{ viceName }}');
-
+        countSec();
 
     });
 </script>
