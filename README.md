@@ -1,4 +1,4 @@
-NWPU LAB
+# NWPU LAB
 
 -------------------------
 
@@ -28,5 +28,4 @@ NWPU LAB
 
 # 数据库支持
 
-* MySQL
-* SQLite3
+sqlAlchemy支持的所有数据库以及驱动
